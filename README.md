@@ -2,10 +2,16 @@
 
 work done:
 creat four main pages, corruspanding to four main functions:
-  1.recive new device 
-  2.send device dataset to process
+  1.recive new device:
+		need to update to real dataset URL
+  2.send device dataset to process:
+		need to complete two functions: getSubsetData() and getNeuralNet()
+		need to figure out how to send all the data we want-in npz file? other format? string?
+		need to figure out how we even save neuralNet-as chainer object or simply numpy matrix
   3.get results and stats from device
+		no work was done
   4.display ui with stats about whatever
+		no work was done
 
 
 
