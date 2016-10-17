@@ -6,6 +6,10 @@ from django.http import HttpResponse
 def index(request):
     return HttpResponse("index test")
 def home(request):
+    print("here we go\n")
+    if request.method == 'POST':
+        print("here we go again\n")
+        print(request.body)
     return HttpResponse("home page. here we can display stats about our network and connected devices")
 def imalive(request):
     return HttpResponse("here we give the device unique ID and send it to getdataset")
