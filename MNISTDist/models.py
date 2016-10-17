@@ -53,5 +53,5 @@ class MiniBatch(models.Model):
     deviceIDSQL=models.ForeignKey(Device, on_delete=models.CASCADE)
     status=models.IntegerField()    #0-not asssigned 1-assigned and not completed 2-done
     startComputingTime=models.DateTimeField()
-
+    isTrain = models.BooleanField()
     
