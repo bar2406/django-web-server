@@ -28,10 +28,11 @@ import datetime
 class Device(models.Model):
     #device stats 
     deviceID=models.IntegerField()    #unique device ID
-    devicemodel = models.CharField(max_length=200)  #device model i.e "Sony Xperia Z3 Compact"
+    deviceModel = models.CharField(max_length=200)  #device model i.e "Sony Xperia Z3 Compact"
     connection_time = models.DateTimeField()   #time of reciveving "im alive" signal from this device
     lastActiveTime=models.DateTimeField()   #last time this device reqeusted data.
-    totaldatasetsgiven=models.IntegerField()    #some way of marking how much work this device has done
+    #numOfDataSetsGiven=models.IntegerField()    #some way of marking how much work this device has done
+    totalDataSetsGiven=models.IntegerField()
     AvgTrainingTime=models.FloatField() 	#average minibatch training time. 
     AvgValTime=models.FloatField() 	#average minibatch validation time. 
 
@@ -41,7 +42,7 @@ class Device(models.Model):
     epoch=models.IntegerField() #from what epoch this minibatch is from
 	
     def __str__(self):
-        return str(self.deviceID) + ", " + self.devicemodel
+        return str(self.deviceID) + ", " + self.deviceModel
 
 @python_2_unicode_compatible  # only if you need to support Python 2
 class MiniBatch(models.Model):
