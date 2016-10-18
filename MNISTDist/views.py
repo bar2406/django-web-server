@@ -40,8 +40,8 @@ def getData(request):
         else:
             """
             getSubsetData() - init minibatch database if: this is the first epoch or if validation is done
-                                in init we need to randomly order the dataset into (training+validation) minibatches and add them to the minibatch database
-                              return next available minibatch or, if 95% of minibatches are done and all of the minibatches are assigned, return validation minibatch
+                                in init we need to randomly order the dataset into (training+validation) minibatches and add them to the minibatch database. all are init with MiniBatch.status=0
+                              return next available minibatch or, if 95% of minibatches are done and all of the minibatches are assigned, return validation minibatch. update MiniBatch.status to 1
             getNeuralNet() - return parameters of the neural network. TODO - in what format????
             """
             (isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData()
@@ -62,20 +62,29 @@ def postData(request):
     '''
 
     """
-    dataIsRelevant(Device) - decides if the results of the device are relevant. can do it based on timeout from assignment or from how many minibatches were completed since this minibatch
+    dataIsRelevant(Device) - decides if the results of the device are relevant. can do it based on timeout from assignment or from how many minibatches were completed since this minibatch.
+                                special case-if results are validation
+    updateNeuralNet(compResult) - revices compResult which is a delta of the neuralNet and updates the neuralNet
     """
     if request.method == 'POST': #POST because device is sending the parameters mentioned above
         (deviceID, epochNumber, compTime, compResult) = parsePostDataParameters(request.body)
         currentDevice = Device.objects.get(deviceID = devID)
         if dataIsRelevant(currentDevice): #TODO - check if data from device is relevant (server didn't drop its result for irrelevence-if too much time has passed)
-            #TODO - if minibatch.isTrain=true
-                #TODO - update neuralNet
-            #TODO - if minibatch.isTrain=false
-                #TODO - update epoch validation results
-        #TODO - update device statistics
+            currentMiniBatch=MiniBatch.objects.get(minibatchID = currentDevice.minibatchID)
+            currentMiniBatch.status=2
+            if currentMiniBatch.isTrain:
+                updateNeuralNet(compResult)
+            else
+                #TODO - update epoch validation results. perhaps create another django model and database for epochs
+        currentDevice.lastActiveTime=timezone.now()
+        #AvgTrainingTime=models.FloatField() 	#average minibatch training time. 
+        #AvgValTime=models.FloatField() 	#average minibatch validation time. 
+        return HttpResponse("thanks")
+	
                         
-    
+"""    
 def getdataset(request):
     return HttpResponse("here we supply the device with link to dataset (or just id of the inputs from the dataset)")
 def sendresults(request):
     return HttpResponse("here we recive results from the device")
+    """
