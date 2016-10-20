@@ -5,7 +5,7 @@ from . import views
 urlpatterns = [
     url(r'^home', views.home, name='home'),
     url(r'^imalive', views.imalive, name='imalive'),
-    url(r'^getdataset', views.getdataset, name='getdataset'),
-    url(r'^sendresults', views.sendresults, name='sendresults'),
+    url(r'^getData', views.getData, name='getData'),
+    url(r'^postData', views.postData, name='postData'),
 
 ]

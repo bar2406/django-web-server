@@ -2,6 +2,9 @@ from django.shortcuts import render
 from .models import Device
 from django.utils import timezone
 import datetime
+import numpy 
+from django.http import FileResponse
+from .ourfunctions import updateEpochStats,updateNeuralNet,dataIsRelevant,getNeuralNet,getSubsetData
 
 # Create your views here.
 from django.http import HttpResponse
@@ -22,6 +25,7 @@ def imalive(request):
     '''
     if request.method == 'POST': #POST because device is sending its type(model)
         idNum = Device.objects.count() + 1
+        print("hi "+idNum+" bye")
         #Device.objects.create(deviceID=idNum, deviceModel=request.body, connection_time=timezone.now(), lastActiveTime=timezone.now(), numOfDataSetsGiven=0,  AvgTrainingTime=0, AvgValTime=0, minibatchID=None, epoch=None)
         Device.objects.create(deviceID=idNum, deviceModel=request.body, connection_time=timezone.now(), lastActiveTime=timezone.now(), totalDataSetsGiven=0, AvgTrainingTime=0, AvgValTime=0, minibatchID=1, epoch=1)
         dataSetURL = "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz" #TODO - give it the real URL that is needed, maybe more URLs are needed
@@ -39,7 +43,7 @@ def getData(request):
             print("devID in getData is not int, request.body is: " + request.body)
         else:
             """
-            getSubsetData() - init minibatch database if: this is the first epoch or if validation is done
+            getSubsetData() - init minibatch database and adds another epoch to database if: this is the first epoch or if validation is done
                                 in init we need to randomly order the dataset into (training+validation) minibatches and add them to the minibatch database. all are init with MiniBatch.status=0
                               return next available minibatch or, if 95% of minibatches are done and all of the minibatches are assigned, return validation minibatch. update MiniBatch.status to 1
             getNeuralNet() - return parameters of the neural network. TODO - in what format????
@@ -52,7 +56,19 @@ def getData(request):
             currentDevice.totalDataSetsGiven = currentDevice.totalDataSetsGiven + 1
             currentDevice.minibatchID = minibatchID
             currentDevice.epoch = epochNumber
-            return HttpResponse("isTrain: " + isTrain + " minibatchID: " + minibatchID + " epochNumber: " + epochNumber + " subsetDataForDevice: " + subsetDataForDevice + " neuralNet: " + neuralNet) #TODO - send subsetDataForDevice and neuralNet as files and not like this
+            tempFilePath="C:\temp\Data.npz"
+            numpy.savez(tempFilePath, isTrain = isTrain, minibatchID = minibatchID, epochNumber = epochNumber, subsetDataForDevice = subsetDataForDevice, neuralNet = neuralNet)
+            response=FileResponse(open(tempFilePath, 'rb'))
+            response['Content-Disposition'] = 'attachment; filename=Data.npz'
+            return response
+            '''
+            open on the reciveing side should be as simple as:
+
+            import urllib.request
+            # Download the file from `url` and save it locally under `file_name`:
+            urllib.request.urlretrieve(url, file_name)
+            '''
+            #return HttpResponse("isTrain: " + isTrain + " minibatchID: " + minibatchID + " epochNumber: " + epochNumber + " subsetDataForDevice: " + subsetDataForDevice + " neuralNet: " + neuralNet) #TODO - send subsetDataForDevice and neuralNet as files and not like this
 
 
 def postData(request):
@@ -65,6 +81,7 @@ def postData(request):
     dataIsRelevant(Device) - decides if the results of the device are relevant. can do it based on timeout from assignment or from how many minibatches were completed since this minibatch.
                                 special case-if results are validation
     updateNeuralNet(compResult) - revices compResult which is a delta of the neuralNet and updates the neuralNet
+     updateEpochStats(compResult) - revices compResult which is hit rate and number of inputs it was calculated on and updates epoch stats in the database
     """
     if request.method == 'POST': #POST because device is sending the parameters mentioned above
         (deviceID, epochNumber, compTime, compResult) = parsePostDataParameters(request.body)
@@ -74,8 +91,8 @@ def postData(request):
             currentMiniBatch.status=2
             if currentMiniBatch.isTrain:
                 updateNeuralNet(compResult)
-            else
-                #TODO - update epoch validation results. perhaps create another django model and database for epochs
+            else :
+                updateEpochStats(compResult)
         currentDevice.lastActiveTime=timezone.now()
         #AvgTrainingTime=models.FloatField() 	#average minibatch training time. 
         #AvgValTime=models.FloatField() 	#average minibatch validation time. 

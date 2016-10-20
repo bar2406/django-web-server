@@ -27,7 +27,7 @@ import datetime
 @python_2_unicode_compatible  # only if you need to support Python 2
 class Device(models.Model):
     #device stats 
-    deviceID=models.IntegerField()    #unique device ID
+    deviceID=models.IntegerField(primary_key=True)    #unique device ID
     deviceModel = models.CharField(max_length=200)  #device model i.e "Sony Xperia Z3 Compact"
     connection_time = models.DateTimeField()   #time of reciveving "im alive" signal from this device
     lastActiveTime=models.DateTimeField()   #last time this device reqeusted data.
@@ -54,4 +54,12 @@ class MiniBatch(models.Model):
     status=models.IntegerField()    #0-not asssigned 1-assigned and not completed 2-done
     startComputingTime=models.DateTimeField()
     isTrain = models.BooleanField()
+	
+@python_2_unicode_compatible  # only if you need to support Python 2
+class Epoch(models.Model):
+    epochID=models.IntegerField(primary_key=True)   #epoch number
+    startingTime=models.DateTimeField()
+    finishTime=models.DateTimeField()
+    hitRate=models.FloatField()
+
     
