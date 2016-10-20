@@ -4,13 +4,16 @@ from django.utils import timezone
 import datetime
 import numpy 
 from django.http import FileResponse
-from .ourfunctions import updateEpochStats,updateNeuralNet,dataIsRelevant,getNeuralNet,getSubsetData
+# from .ourfunctions import updateEpochStats,updateNeuralNet,dataIsRelevant,getNeuralNet,getSubsetData
+from ourfunctions import *
+from django.http import HttpResponse
+
 
 # Create your views here.
-from django.http import HttpResponse
 
 def index(request):
     return HttpResponse("index test")
+
 def home(request):
     print("here we go\n")
     if request.method == 'POST':
@@ -70,7 +73,6 @@ def getData(request):
             '''
             #return HttpResponse("isTrain: " + isTrain + " minibatchID: " + minibatchID + " epochNumber: " + epochNumber + " subsetDataForDevice: " + subsetDataForDevice + " neuralNet: " + neuralNet) #TODO - send subsetDataForDevice and neuralNet as files and not like this
 
-
 def postData(request):
     '''
         Device will POST its deviceID, epoch number, computation time and training/validation results
@@ -97,11 +99,3 @@ def postData(request):
         #AvgTrainingTime=models.FloatField() 	#average minibatch training time. 
         #AvgValTime=models.FloatField() 	#average minibatch validation time. 
         return HttpResponse("thanks")
-	
-                        
-"""    
-def getdataset(request):
-    return HttpResponse("here we supply the device with link to dataset (or just id of the inputs from the dataset)")
-def sendresults(request):
-    return HttpResponse("here we recive results from the device")
-    """
