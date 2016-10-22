@@ -10,9 +10,6 @@ from django.http import HttpResponse
 
 # Create your views here.
 
-def index(request):
-    return HttpResponse("index test")
-
 def home(request):
     print("here we go\n")
     if request.method == 'POST':

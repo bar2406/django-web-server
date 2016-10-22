@@ -40,7 +40,7 @@ class Device(models.Model):
     minibatchID=models.IntegerField()   #some ID of the current minibatch this device is working on. not sure its actually an int
     #minibatchIDSQL=models.ForeignKey(MiniBatch, on_delete=models.CASCADE)   #some ID of the current minibatch this device is working on. not sure its actually an int
     epoch=models.IntegerField() #from what epoch this minibatch is from
-	
+
     def __str__(self):
         return str(self.deviceID) + ", " + self.deviceModel
 
@@ -53,11 +53,11 @@ class MiniBatch(models.Model):
     deviceIDSQL=models.ForeignKey(Device, on_delete=models.CASCADE)
     status=models.IntegerField()    #0-not asssigned 1-assigned and not completed 2-done
     startComputingTime=models.DateTimeField()
-    isTrain = models.BooleanField()
+    isTrain = models.BooleanField(default=True)
 
     def __str__(self):
         return "minibatchID: " + str(self.minibatchID)
-	
+
 @python_2_unicode_compatible  # only if you need to support Python 2
 class Epoch(models.Model):
     epochID=models.IntegerField(primary_key=True)   #epoch number
