@@ -49,11 +49,13 @@ class MiniBatch(models.Model):
     minibatchID=models.IntegerField(primary_key=True)   #some ID of the current minibatch this device is working on. not sure its actually an int
     imageIndices=models.IntegerField()	#TODO - change to array
     epochNumber=models.IntegerField()
+    isTrain=models.BooleanField(default=True)
+    #isTrain = models.BooleanField(default=True)
     deviceID=models.IntegerField()    #unique device ID
     deviceIDSQL=models.ForeignKey(Device, on_delete=models.CASCADE)
     status=models.IntegerField()    #0-not asssigned 1-assigned and not completed 2-done
     startComputingTime=models.DateTimeField()
-    isTrain = models.BooleanField(default=True)
+    #isTrain = models.BooleanField(default=True)
 
     def __str__(self):
         return "minibatchID: " + str(self.minibatchID)
