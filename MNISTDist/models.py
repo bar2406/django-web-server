@@ -54,6 +54,9 @@ class MiniBatch(models.Model):
     status=models.IntegerField()    #0-not asssigned 1-assigned and not completed 2-done
     startComputingTime=models.DateTimeField()
     isTrain = models.BooleanField()
+
+    def __str__(self):
+        return "minibatchID: " + str(self.minibatchID)
 	
 @python_2_unicode_compatible  # only if you need to support Python 2
 class Epoch(models.Model):
@@ -61,5 +64,8 @@ class Epoch(models.Model):
     startingTime=models.DateTimeField()
     finishTime=models.DateTimeField()
     hitRate=models.FloatField()
+
+    def __str__(self):
+        return "epochID: " + str(self.epochID)
 
     

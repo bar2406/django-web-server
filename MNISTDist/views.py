@@ -28,7 +28,7 @@ def imalive(request):
     '''
     if request.method == 'POST': #POST because device is sending its type(model)
         idNum = Device.objects.count() + 1
-        print("hi "+idNum+" bye")
+        print("hi " + str(idNum) + " bye")
         #Device.objects.create(deviceID=idNum, deviceModel=request.body, connection_time=timezone.now(), lastActiveTime=timezone.now(), numOfDataSetsGiven=0,  AvgTrainingTime=0, AvgValTime=0, minibatchID=None, epoch=None)
         Device.objects.create(deviceID=idNum, deviceModel=request.body, connection_time=timezone.now(), lastActiveTime=timezone.now(), totalDataSetsGiven=0, AvgTrainingTime=0, AvgValTime=0, minibatchID=1, epoch=1)
         dataSetURL = "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz" #TODO - give it the real URL that is needed, maybe more URLs are needed
@@ -49,23 +49,25 @@ def getData(request):
             getSubsetData() - init minibatch database and adds another epoch to database if: this is the first epoch or if validation is done
                                 in init we need to randomly order the dataset into (training+validation) minibatches and add them to the minibatch database. all are init with MiniBatch.status=0
                               return next available minibatch or, if 95% of minibatches are done and all of the minibatches are assigned, return validation minibatch. update MiniBatch.status to 1
-            getNeuralNet() - return parameters of the neural network. TODO - in what format????
+            getNeuralNet() - return parameters of the neural network. TODO - in what format???? = NPZ format
             """
+            print devID
             (isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData()
             neuralNet = getNeuralNet()  
             #TODO - insert it to a function that does statistics
-            currentDevice = Device.objects.get(deviceID = devID)
-            currentDevice.lastActiveTime = timezone.now()
-            currentDevice.totalDataSetsGiven = currentDevice.totalDataSetsGiven + 1
-            currentDevice.minibatchID = minibatchID
-            currentDevice.epoch = epochNumber
-            tempFilePath="C:\temp\Data.npz"
+            calculateStats(Device.objects.get(deviceID = devID), minibatchID, epochNumber)
+            #currentDevice = Device.objects.get(deviceID = devID)
+            #currentDevice.lastActiveTime = timezone.now()
+            #currentDevice.totalDataSetsGiven = currentDevice.totalDataSetsGiven + 1
+            #currentDevice.minibatchID = minibatchID
+            #currentDevice.epoch = epochNumber
+            tempFilePath="D:\ProjectA\Data.npz"
             numpy.savez(tempFilePath, isTrain = isTrain, minibatchID = minibatchID, epochNumber = epochNumber, subsetDataForDevice = subsetDataForDevice, neuralNet = neuralNet)
             response=FileResponse(open(tempFilePath, 'rb'))
             response['Content-Disposition'] = 'attachment; filename=Data.npz'
             return response
             '''
-            open on the reciveing side should be as simple as:
+            open on the recieving side should be as simple as:
 
             import urllib.request
             # Download the file from `url` and save it locally under `file_name`:

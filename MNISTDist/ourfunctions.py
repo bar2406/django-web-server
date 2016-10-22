@@ -2,6 +2,7 @@ import numpy
 import chainer
 import chainer.links as L
 from .models import Device
+from django.utils import timezone
 
 
 #defining neuralNet, should be static and global(?) variable
@@ -30,7 +31,7 @@ getNeuralNet() - return parameters of the neural network. TODO - in what format?
 dataIsRelevant(Device) - decides if the results of the device are relevant. can do it based on timeout from assignment or from how many minibatches were completed since this minibatch.
                             special case-if results are validation
 updateNeuralNet(compResult) - revices compResult which is a delta of the neuralNet and updates the neuralNet
-    updateEpochStats(compResult) - revices compResult which is hit rate and number of inputs it was calculated on and updates epoch stats in the database
+updateEpochStats(compResult) - revices compResult which is hit rate and number of inputs it was calculated on and updates epoch stats in the database
 """
 #(isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData()
 def getSubsetData():
@@ -53,3 +54,9 @@ def updateNeuralNet(compResult):
 def updateEpochStats(compResult):
     #does somthing
     return True
+
+def calculateStats(deviceObj, minibatchID, epochNumber):
+    deviceObj.lastActiveTime = timezone.now()
+    deviceObj.totalDataSetsGiven = deviceObj.totalDataSetsGiven + 1
+    deviceObj.minibatchID = minibatchID
+    deviceObj.epoch = epochNumber
