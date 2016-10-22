@@ -52,21 +52,15 @@ def getData(request):
             getNeuralNet() - return parameters of the neural network. TODO - in what format???? = NPZ format
             """
             (isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData()
-            neuralNet = getNeuralNet()  
-            #TODO - insert it to a function that does statistics
+            neuralNet = getNeuralNet()
             calculateStats(Device.objects.get(deviceID = devID), minibatchID, epochNumber)
-            #currentDevice = Device.objects.get(deviceID = devID)
-            #currentDevice.lastActiveTime = timezone.now()
-            #currentDevice.totalDataSetsGiven = currentDevice.totalDataSetsGiven + 1
-            #currentDevice.minibatchID = minibatchID
-            #currentDevice.epoch = epochNumber
             tempFilePath="D:\ProjectA\Data.npz"
             numpy.savez(tempFilePath, isTrain = isTrain, minibatchID = minibatchID, epochNumber = epochNumber, subsetDataForDevice = subsetDataForDevice, neuralNet = neuralNet)
             response=FileResponse(open(tempFilePath, 'rb'))
             response['Content-Disposition'] = 'attachment; filename=Data.npz'
             return response
             '''
-            open on the recieving side should be as simple as:
+            open on the recieving side should be as simple as: --look on the example for the correct way
 
             import urllib.request
             # Download the file from `url` and save it locally under `file_name`:
