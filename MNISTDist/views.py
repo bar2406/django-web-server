@@ -84,8 +84,8 @@ def postData(request):
     """
     dataIsRelevant(Device) - decides if the results of the device are relevant. can do it based on timeout from assignment or from how many minibatches were completed since this minibatch.
                                 special case-if results are validation
-    updateNeuralNet(compResult) - revices compResult which is a delta of the neuralNet and updates the neuralNet
-     updateEpochStats(compResult) - revices compResult which is hit rate and number of inputs it was calculated on and updates epoch stats in the database
+    updateNeuralNet(compResult) - receives compResult which is a delta of the neuralNet and updates the neuralNet
+     updateEpochStats(compResult) - receives compResult which is hit rate and number of inputs it was calculated on and updates epoch stats in the database
     """
     if request.method == 'POST': #POST because device is sending the parameters mentioned above
         (deviceID, epochNumber, compTime, compResult) = parsePostDataParameters(request.body)
