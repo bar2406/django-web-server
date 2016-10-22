@@ -45,7 +45,8 @@ def getNeuralNet():
     '''
     return parameters of the neural network. TODO - in what format???? = NPZ format
     '''
-    return neuralNet.neuralNetArg
+    tempNet = neuralNet()
+    return tempNet
 
 def parsePostDataParameters(rquestBody):
     '''
