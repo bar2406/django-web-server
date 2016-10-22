@@ -5,5 +5,5 @@ p = rq.post(url + r"/imalive", data=model)
 devId = p.text
 npzFile = rq.post(url + r"/getData", data=devId)
 with open(r"bla.npz", 'wb') as fd:
-	for chunk in p.iter_content(10):
+	for chunk in npzFile.iter_content(10):
 		fd.write(chunk)
