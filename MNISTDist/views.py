@@ -51,7 +51,6 @@ def getData(request):
                               return next available minibatch or, if 95% of minibatches are done and all of the minibatches are assigned, return validation minibatch. update MiniBatch.status to 1
             getNeuralNet() - return parameters of the neural network. TODO - in what format???? = NPZ format
             """
-            print devID
             (isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData()
             neuralNet = getNeuralNet()  
             #TODO - insert it to a function that does statistics

@@ -25,6 +25,7 @@
     <Compile Include="DeepLearningDistSite\urls.py" />
     <Compile Include="DeepLearningDistSite\wsgi.py" />
     <Compile Include="DeepLearningDistSite\__init__.py" />
+    <Compile Include="example\simpleExample.py" />
     <Compile Include="manage.py" />
     <Compile Include="MNISTDist\admin.py" />
     <Compile Include="MNISTDist\apps.py" />
@@ -39,6 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="DeepLearningDistSite" />
+    <Folder Include="example\" />
     <Folder Include="MNISTDist" />
     <Folder Include="MNISTDist\migrations" />
   </ItemGroup>
