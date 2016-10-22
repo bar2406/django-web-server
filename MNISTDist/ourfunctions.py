@@ -20,7 +20,10 @@ class MLP(chainer.Chain):
         h2 = F.relu(self.l2(h1))
         return self.l3(h2)
 
-neuralNet = L.Classifier(MLP(784, 10, 10))
+class neuralNet:
+    neuralNetArg = None
+    def __init__(self):
+        self.neuralNetArg = L.Classifier(MLP(784, 10, 10))
 
 
 def getSubsetData():
@@ -42,7 +45,7 @@ def getNeuralNet():
     '''
     return parameters of the neural network. TODO - in what format???? = NPZ format
     '''
-    return neuralNet
+    return neuralNet.neuralNetArg
 
 def parsePostDataParameters(rquestBody):
     '''
