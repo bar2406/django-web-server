@@ -23,18 +23,15 @@ class MLP(chainer.Chain):
 neuralNet = L.Classifier(MLP(784, 10, 10))
 
 
-"""
-getSubsetData() - init minibatch database and adds another epoch to database if: this is the first epoch or if validation is done
-                    in init we need to randomly order the dataset into (training+validation) minibatches and add them to the minibatch database. all are init with MiniBatch.status=0
-                    return next available minibatch or, if 95% of minibatches are done and all of the minibatches are assigned, return validation minibatch. update MiniBatch.status to 1
-getNeuralNet() - return parameters of the neural network. TODO - in what format????
-dataIsRelevant(Device) - decides if the results of the device are relevant. can do it based on timeout from assignment or from how many minibatches were completed since this minibatch.
-                            special case-if results are validation
-updateNeuralNet(compResult) - revices compResult which is a delta of the neuralNet and updates the neuralNet
-updateEpochStats(compResult) - revices compResult which is hit rate and number of inputs it was calculated on and updates epoch stats in the database
-"""
-#(isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData()
 def getSubsetData():
+    '''
+    init minibatch database and adds another epoch to database if: this is the first epoch or if validation is done
+    in init we need to randomly order the dataset into (training+validation) minibatches and add them to the minibatch database. all are init with MiniBatch.status=0
+    return next available minibatch or, if 95% of minibatches are done and all of the minibatches are assigned, return validation minibatch. update MiniBatch.status to 1
+
+    return parameters as:
+    (isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData()
+    '''
     isTrain=1
     subsetDataForDevice=[1, 3, 5, 7]
     minibatchID=1
@@ -42,20 +39,48 @@ def getSubsetData():
     return isTrain ,subsetDataForDevice, minibatchID, epochNumber
 
 def getNeuralNet():
+    '''
+    return parameters of the neural network. TODO - in what format???? = NPZ format
+    '''
     return neuralNet
 
+def parsePostDataParameters(rquestBody):
+    '''
+    Parse the data that was posted from the deivce and return the parameters (in that order):
+    deviceID, epochNumber, computingTime, computedResult
+    '''
+    deviceID = 1
+    epochNumber = 1
+    computingTime = 1
+    tempFilePath="D:\ProjectA\Data.npz"
+    computedResult = tempFilePath
+    return (deviceID, epochNumber, computingTime, computedResult)
+
 def dataIsRelevant(Device):
+    '''
+    decides if the results of the device are relevant. can do it based on timeout from assignment or from how many minibatches were completed since this minibatch.
+        special case-if results are validation
+    '''
     return True
 
 def updateNeuralNet(compResult):
+    '''
+    receives compResult which is a delta of the neuralNet and updates the neuralNet
+    '''
     #DOES SOMTHING
     return True
 
 def updateEpochStats(compResult):
+    '''
+    receives compResult which is hit rate and number of inputs it was calculated on and updates epoch stats in the database
+    '''
     #does somthing
     return True
 
 def calculateStats(deviceObj, minibatchID, epochNumber):
+    '''
+    calculates different statistics
+    '''
     deviceObj.lastActiveTime = timezone.now()
     deviceObj.totalDataSetsGiven = deviceObj.totalDataSetsGiven + 1
     deviceObj.minibatchID = minibatchID
