@@ -4,7 +4,7 @@ import chainer.links as L
 from .models import Device
 from django.utils import timezone
 
-
+path=r"C:\temp"
 #defining neuralNet, should be static and global(?) variable
 class MLP(chainer.Chain):
 
@@ -20,10 +20,12 @@ class MLP(chainer.Chain):
         h2 = F.relu(self.l2(h1))
         return self.l3(h2)
 
-class neuralNet:
+'''class neuralNet:
     neuralNetArg = None
     def __init__(self):
         self.neuralNetArg = L.Classifier(MLP(784, 10, 10))
+'''
+
 
 
 def getSubsetData():
@@ -41,12 +43,13 @@ def getSubsetData():
     epochNumber=1
     return isTrain ,subsetDataForDevice, minibatchID, epochNumber
 
-def getNeuralNet():
-    '''
-    return parameters of the neural network. TODO - in what format???? = NPZ format
-    '''
-    tempNet = neuralNet()
-    return tempNet
+def getPrivateNeuralNet():
+	#TODO - this will recreate the net every time. this is bad, neuralNet should be static. no idea how to do that. cant have it as a class though.
+	#it needs to be of type L.Classifier(MLP(784, 10, 10). noam this is YOUR PROBLEM :-)
+	neuralNet=L.Classifier(MLP(784, 10, 10))
+	chainer.serializers.save_npz(path+r"\neuralNet.npz",neuralNet)
+	return path+r"\neuralNet.npz"
+
 
 def parsePostDataParameters(rquestBody):
     '''
@@ -56,7 +59,7 @@ def parsePostDataParameters(rquestBody):
     deviceID = 1
     epochNumber = 1
     computingTime = 1
-    tempFilePath="D:\ProjectA\Data.npz"
+    tempFilePath=path+r"\Data.npz"
     computedResult = tempFilePath
     return (deviceID, epochNumber, computingTime, computedResult)
 

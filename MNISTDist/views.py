@@ -4,12 +4,12 @@ from django.utils import timezone
 import datetime
 import numpy 
 from django.http import FileResponse
-from ourfunctions import *
+from .ourfunctions import *
 from django.http import HttpResponse
 
+path=r"C:\temp"
 
 # Create your views here.
-
 def home(request):
     print("here we go\n")
     if request.method == 'POST':
@@ -30,6 +30,15 @@ def imalive(request):
         dataSetURL = "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz" #TODO - give it the real URL that is needed, maybe more URLs are needed
         return HttpResponse("ID: " + str(idNum) + " " + "train-images: " + dataSetURL)
 
+def getNeuralNet(request):
+    '''
+    return neural network model - neuralNet
+    '''
+    response=FileResponse(open(getPrivateNeuralNet(), 'rb'))
+    response['Content-Disposition'] = 'attachment; filename=NeuralNet.npz'
+    return response
+
+
 def getData(request): 
     '''
     Device will POST his ID to this address when it had finished downloading the dataset or when after "postData" stage
@@ -42,10 +51,9 @@ def getData(request):
             print("devID in getData is not int, request.body is: " + str(request.body))
         else:
             (isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData()
-            neuralNet = getNeuralNet()
             calculateStats(Device.objects.get(deviceID = devID), minibatchID, epochNumber)
-            tempFilePath="D:\ProjectA\Data.npz"
-            numpy.savez(tempFilePath, isTrain = isTrain, minibatchID = minibatchID, epochNumber = epochNumber, subsetDataForDevice = subsetDataForDevice, neuralNet = neuralNet)
+            tempFilePath=path+r"\Data.npz"
+            numpy.savez(tempFilePath, isTrain = isTrain, minibatchID = minibatchID, epochNumber = epochNumber, subsetDataForDevice = subsetDataForDevice)
             response=FileResponse(open(tempFilePath, 'rb'))
             response['Content-Disposition'] = 'attachment; filename=Data.npz'
             return response
