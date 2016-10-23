@@ -1,1 +1,5 @@
 *.pyc
+.vs/config/applicationhost.config
+.vs/django-web-server/v14/.suo
+*.sqlite3
+db.sqlite3
