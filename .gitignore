@@ -1,10 +1,6 @@
 *.pyc
-<<<<<<< HEAD
 .vs/config/applicationhost.config
 .vs/django-web-server/v14/.suo
 *.sqlite3
-=======
-*.sqlite3
 db.sqlite3
->>>>>>> origin/master
-db.sqlite3
+.vs/django-web-server/v14/.suo
