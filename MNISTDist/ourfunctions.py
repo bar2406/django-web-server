@@ -12,7 +12,7 @@ class MLP(chainer.Chain):
         super(MLP, self).__init__(
             l1=L.Linear(n_in, n_units),  # first layer
             l2=L.Linear(n_units, n_units),  # second layer
-            l4=L.Linear(n_units, n_out),  # output layer
+            l3=L.Linear(n_units, n_out),  # output layer
         )
 
     def __call__(self, x):
