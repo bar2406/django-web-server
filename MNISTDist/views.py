@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Device
+from .models import Device,MiniBatch
 from django.utils import timezone
 import datetime
 import numpy 
@@ -7,7 +7,7 @@ from django.http import FileResponse
 from .ourfunctions import *
 from django.http import HttpResponse
 
-path=r"D:\ProjectA\django-web-server"
+path=r"D:\ProjectA"
 
 # Create your views here.
 def home(request):
@@ -72,15 +72,15 @@ def postData(request):
     Server will not send anything back
     '''
     if request.method == 'POST': #POST because device is sending the parameters mentioned above
-        (deviceID, epochNumber, computingTime, computedResult) = parsePostDataParameters(request.body)
+        (devID, epochNumber, computingTime, computedResult) = parsePostDataParameters(request.body)
         currentDevice = Device.objects.get(deviceID = devID)
         if dataIsRelevant(currentDevice): #TODO - check if data from device is relevant (server didn't drop its result for irrelevence-if too much time has passed)
             currentMiniBatch=MiniBatch.objects.get(minibatchID = currentDevice.minibatchID)
             currentMiniBatch.status=2
             if currentMiniBatch.isTrain:
-                updateNeuralNet(compResult)
+                updateNeuralNet(computedResult)
             else :
-                updateEpochStats(compResult)
+                updateEpochStats(computedResult)
         currentDevice.lastActiveTime=timezone.now()
         #AvgTrainingTime=models.FloatField() 	#average minibatch training time. 
         #AvgValTime=models.FloatField() 	#average minibatch validation time. 
