@@ -30,7 +30,6 @@
     <Compile Include="manage.py" />
     <Compile Include="MNISTDist\admin.py" />
     <Compile Include="MNISTDist\apps.py" />
-    <Compile Include="MNISTDist\migrations\0001_initial.py" />
     <Compile Include="MNISTDist\migrations\__init__.py" />
     <Compile Include="MNISTDist\models.py" />
     <Compile Include="MNISTDist\ourfunctions.py" />
