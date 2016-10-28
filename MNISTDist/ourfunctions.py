@@ -4,7 +4,8 @@ import chainer.links as L
 from .models import Device
 from django.utils import timezone
 
-path=r"../.."
+#path=r"D:\ProjectA"
+path=r"C:\temp"
 #defining neuralNet, should be static and global(?) variable
 class MLP(chainer.Chain):
 

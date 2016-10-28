@@ -7,7 +7,8 @@ from django.http import FileResponse
 from .ourfunctions import *
 from django.http import HttpResponse
 
-path=r"D:\ProjectA"
+#path=r"D:\ProjectA"
+path=r"C:\temp"
 
 # Create your views here.
 def home(request):
