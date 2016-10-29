@@ -51,7 +51,7 @@ def getData(request):
         except:
             print("devID in getData is not int, request.body is: " + str(request.body))
         else:
-            (isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData()
+            (isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData(devID)
             calculateStats(Device.objects.get(deviceID = devID), minibatchID, epochNumber)
             tempFilePath=path+r"\Data.npz"
             numpy.savez(tempFilePath, isTrain = isTrain, minibatchID = minibatchID, epochNumber = epochNumber, subsetDataForDevice = subsetDataForDevice)

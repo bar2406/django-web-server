@@ -1,11 +1,12 @@
 import numpy
 import chainer
 import chainer.links as L
-from .models import Device
+from .models import *
 from django.utils import timezone
-
+import json
 #path=r"D:\ProjectA"
 path=r"C:\temp"
+MNIST_DATASET_SIZE=60000    #TODO - for robustness, perhaps actually importing the data base and checking its size 
 #defining neuralNet, should be static and global(?) variable
 class MLP(chainer.Chain):
 
@@ -29,7 +30,7 @@ class MLP(chainer.Chain):
 
 
 
-def getSubsetData():
+def getSubsetData(DeviceID):
     '''
     init minibatch database and adds another epoch to database if: this is the first epoch or if validation is done
     in init we need to randomly order the dataset into (training+validation) minibatches and add them to the minibatch database. all are init with MiniBatch.status=0
@@ -38,10 +39,22 @@ def getSubsetData():
     return parameters as:
     (isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData()
     '''
-    isTrain=1
-    subsetDataForDevice=[1, 3, 5, 7]
-    minibatchID=1
-    epochNumber=1
+    if Epoch.objects.count() == 0 or checkEpochDone() == True:
+        _initEpoch()
+        _initMiniBatches()
+    currentBatch=_fetchNextMiniBatch()
+
+    #updating currentBatch stats
+    currentBatch.deviceID=DeviceID
+    currentBatch.status=1
+    currentBatch.startComputingTime=timezone.now()
+
+    #create return valuse
+    isTrain=currentBatch.isTrain
+    jsonDec = json.decoder.JSONDecoder()
+    subsetDataForDevice=jsonDec.decode(currentBatch.imageIndices)
+    minibatchID=currentBatch.minibatchID
+    epochNumber=minibatchID.epochID
     return isTrain ,subsetDataForDevice, minibatchID, epochNumber
 
 def getPrivateNeuralNet():
@@ -93,3 +106,65 @@ def calculateStats(deviceObj, minibatchID, epochNumber):
     deviceObj.totalDataSetsGiven = deviceObj.totalDataSetsGiven + 1
     deviceObj.minibatchID = minibatchID
     deviceObj.epoch = epochNumber
+
+def _initEpoch():
+    '''
+    creat and initialize the next epoch with standart stats
+    '''
+    Epoch.objects.create(epochID = Epoch.objects.count()+1, startingTime = timezone.now(), finishTime = timezone.now(), hitRate = 0) #TODO - finishTime,hitRate are unknown. better if they would be None
+
+def _creatMiniBatch(imageIndices,epochID,isTrain):
+    '''
+    creat and initialize MiniBatch 
+    '''
+    MiniBatch.objects.create(minibatchID = MiniBatch.objects.coount()+1, imageIndices = json.dumps(imageIndices), epochID = epochID, isTrain = isTrain, deviceID = None, status = 0, startComputingTime = None) 
+
+def _initMiniBatches(batchsize = 1000,valSize = 5000):
+    '''
+    creates all minibatches for latest epoch.
+    randomly orders mnist into minibatches, and devides them into training and validation batches.
+    '''
+    order=numpy.random.permutation(MNIST_DATASET_SIZE)
+    for i in range(numpy.ceil((MNIST_DATASET_SIZE-valSize)/batchsize)): #create Training batches
+        _creatMiniBatch(order[:batchsize],Epoch.objects.count(),True)
+        order=order[batchsize:]
+    for i in range(numpy.ceil((valSize)/batchsize)): #create Validation batches
+        _creatMiniBatch(order[:batchsize],Epoch.objects.count(),False)
+        order=order[batchsize:]
+
+def checkEpochDone():
+    '''
+    return true if latest epoch is done. false otherwise. validation starts when epoch is done
+    p.s even if epoch is done it dosen't mean that we dont allow new deltas from that epoch.
+        it just means that all of the minibathces were allocated, certien percentage of them is done 
+        (and all validation results are done?)
+    '''
+    return False
+
+def _fetchNextMiniBatch():
+    '''
+    returns next minibatch for processing. returns only from latest epoch
+    p.s as long as checkEpochDone() dosen't decide to move to the next epoch, this function will continue to distribute batches.
+        so its checkEpochDone() responsibility to make sure that we dont serve the same batch to 20 devices only becuase its the last batch in the epoch
+    '''
+    #1 priority: unassigned validation batches from previous epoch
+    if Epoch.objects.count() > 1:
+        if MiniBatch.objects.filter(status=0).exclude(isTrain=True).filter(epochID=Epoch.objects.count()-1).count() !=0 :
+            return MiniBatch.objects.filter(status=0).exclude(isTrain=True).filter(epochID=Epoch.objects.count()-1).order_by(minibatchID)[0]
+
+    #2 priority: assigned (and not done) validation batches from previous epoch that are over X time old
+    if Epoch.objects.count() > 1:
+        tempBatch=MiniBatch.objects.filter(status=1).exclude(isTrain=True).filter(epochID=Epoch.objects.count()-1).order_by('startComputingTime')[0]
+        delta=timezone.now()-tempBatch.startComputingTime
+        if(delta.seconds>60*15): #means X=15
+            return tempBatch
+
+    #3 priority: unassigned training batches from current epoch
+    if MiniBatch.objects.filter(status=0).filter(isTrain=True).filter(epochID=Epoch.objects.count()).count() != 0:
+        return MiniBatch.objects.filter(status=0).filter(isTrain=True).filter(epochID=Epoch.objects.count()).order_by(minibatchID)[0]
+
+    #4 priority: assigned (and not done) training batches from current epoch
+    if MiniBatch.objects.filter(status=1).filter(isTrain=True).filter(epochID=Epoch.objects.count()).count() != 0:
+        return MiniBatch.objects.filter(status=1).filter(isTrain=True).filter(epochID=Epoch.objects.count()).order_by(minibatchID)[0]
+
+    raise RuntimeError('error 1234: didn\'t found MiniBatch')
