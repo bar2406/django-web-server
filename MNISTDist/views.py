@@ -25,7 +25,6 @@ def imalive(request):
     '''
     if request.method == 'POST': #POST because device is sending its type(model)
         idNum = Device.objects.count() + 1
-        print("hi " + str(idNum) + " bye")
         #Device.objects.create(deviceID=idNum, deviceModel=request.body, connection_time=timezone.now(), lastActiveTime=timezone.now(), numOfDataSetsGiven=0,  AvgTrainingTime=0, AvgValTime=0, minibatchID=None, epoch=None)
         Device.objects.create(deviceID=idNum, deviceModel=request.body, connection_time=timezone.now(), lastActiveTime=timezone.now(), totalDataSetsGiven=0, AvgTrainingTime=0, AvgValTime=0, minibatchID=1, epoch=1)
         dataSetURL = "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz" #TODO - give it the real URL that is needed, maybe more URLs are needed
@@ -49,7 +48,7 @@ def getData(request):
         try:
             devID =  int(request.body)
         except:
-            print("devID in getData is not int, request.body is: " + str(request.body))
+                raise RuntimeError("devID in getData is not int, request.body is: " + str(request.body))
         else:
             (isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData(devID)
             calculateStats(Device.objects.get(deviceID = devID), minibatchID, epochNumber)

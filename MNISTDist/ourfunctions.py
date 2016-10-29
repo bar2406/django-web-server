@@ -40,7 +40,6 @@ def getSubsetData(DeviceID):
     (isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData()
     '''
     if Epoch.objects.count() == 0 or checkEpochDone() == True:
-        print("43")
         _initEpoch()
         _initMiniBatches()
     currentBatch=_fetchNextMiniBatch()
@@ -49,13 +48,14 @@ def getSubsetData(DeviceID):
     currentBatch.deviceID=DeviceID
     currentBatch.status=1
     currentBatch.startComputingTime=timezone.now()
+    currentBatch.save()
 
     #create return valuse
     isTrain=currentBatch.isTrain
     jsonDec = json.decoder.JSONDecoder()
     subsetDataForDevice=jsonDec.decode(currentBatch.imageIndices)
     minibatchID=currentBatch.minibatchID
-    epochNumber=minibatchID.epochID
+    epochNumber=currentBatch.epochID
     return isTrain ,subsetDataForDevice, minibatchID, epochNumber
 
 def getPrivateNeuralNet():
@@ -112,28 +112,24 @@ def _initEpoch():
     '''
     creat and initialize the next epoch with standart stats
     '''
-    print("115")
     Epoch.objects.create(epochID = Epoch.objects.count()+1, startingTime = timezone.now(), finishTime = timezone.now(), hitRate = 0) #TODO - finishTime,hitRate are unknown. better if they would be None
 
 def _creatMiniBatch(imageIndices,epochID,isTrain):
     '''
     create and initialize MiniBatch 
     '''
-    print("112")
-    MiniBatch.objects.create(minibatchID = MiniBatch.objects.count()+1, imageIndices = json.dumps(imageIndices), epochID = epochID, isTrain = isTrain, deviceID = None, status = 0, startComputingTime = None) 
+    MiniBatch.objects.create(minibatchID = MiniBatch.objects.count()+1, imageIndices = json.dumps(imageIndices.tolist()), epochID = epochID, isTrain = isTrain, deviceID = None, status = 0, startComputingTime = None) 
 
 def _initMiniBatches(batchsize = 1000,valSize = 5000):
     '''
     creates all minibatches for latest epoch.
     randomly orders mnist into minibatches, and devides them into training and validation batches.
     '''
-    print("130")
     order=numpy.random.permutation(MNIST_DATASET_SIZE)
-    print("order length: "+str(len(order)))
     for i in range(int(numpy.ceil((MNIST_DATASET_SIZE-valSize)/batchsize))): #create Training batches
         _creatMiniBatch(order[:batchsize],Epoch.objects.count(),True)
         order=order[batchsize:]
-    for i in range(numpy.ceil((valSize)/batchsize)): #create Validation batches
+    for i in range(int(numpy.ceil((valSize)/batchsize))): #create Validation batches
         _creatMiniBatch(order[:batchsize],Epoch.objects.count(),False)
         order=order[batchsize:]
 
@@ -155,7 +151,7 @@ def _fetchNextMiniBatch():
     #1 priority: unassigned validation batches from previous epoch
     if Epoch.objects.count() > 1:
         if MiniBatch.objects.filter(status=0).exclude(isTrain=True).filter(epochID=Epoch.objects.count()-1).count() !=0 :
-            return MiniBatch.objects.filter(status=0).exclude(isTrain=True).filter(epochID=Epoch.objects.count()-1).order_by(minibatchID)[0]
+            return MiniBatch.objects.filter(status=0).exclude(isTrain=True).filter(epochID=Epoch.objects.count()-1).order_by('minibatchID')[0]
 
     #2 priority: assigned (and not done) validation batches from previous epoch that are over X time old
     if Epoch.objects.count() > 1:
@@ -166,10 +162,10 @@ def _fetchNextMiniBatch():
 
     #3 priority: unassigned training batches from current epoch
     if MiniBatch.objects.filter(status=0).filter(isTrain=True).filter(epochID=Epoch.objects.count()).count() != 0:
-        return MiniBatch.objects.filter(status=0).filter(isTrain=True).filter(epochID=Epoch.objects.count()).order_by(minibatchID)[0]
+        return MiniBatch.objects.filter(status=0).filter(isTrain=True).filter(epochID=Epoch.objects.count()).order_by('minibatchID')[0]
 
     #4 priority: assigned (and not done) training batches from current epoch
     if MiniBatch.objects.filter(status=1).filter(isTrain=True).filter(epochID=Epoch.objects.count()).count() != 0:
-        return MiniBatch.objects.filter(status=1).filter(isTrain=True).filter(epochID=Epoch.objects.count()).order_by(minibatchID)[0]
+        return MiniBatch.objects.filter(status=1).filter(isTrain=True).filter(epochID=Epoch.objects.count()).order_by('minibatchID')[0]
 
     raise RuntimeError('error 1234: didn\'t found MiniBatch')
