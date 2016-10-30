@@ -4,6 +4,8 @@ import chainer.links as L
 from .models import *
 from django.utils import timezone
 import json
+import os.path
+
 #path=r"D:\ProjectA"
 path=r"C:\temp"
 MNIST_DATASET_SIZE=60000    #TODO - for robustness, perhaps actually importing the data base and checking its size 
@@ -61,9 +63,10 @@ def getSubsetData(DeviceID):
 def getPrivateNeuralNet():
 	#TODO - this will recreate the net every time. this is bad, neuralNet should be static. no idea how to do that. cant have it as a class though.
 	#it needs to be of type L.Classifier(MLP(784, 10, 10). noam this is YOUR PROBLEM :-)
-	neuralNet=L.Classifier(MLP(784, 10, 10))
-	chainer.serializers.save_npz(path+r"\neuralNet.npz",neuralNet)
-	return path+r"\neuralNet.npz"
+    if not os.path.isfile('nerualNetFile.npz'):
+        neuralNet=chainer.serializers.save_npz(path+r'\nerualNetFile.npz', L.Classifier(MLP(784, 10, 10)),True)
+    #chainer.serializers.save_npz(path+r"\neuralNet.npz",neuralNet)
+    return path+r"\nerualNetFile.npz"
 
 
 def parsePostDataParameters(rquestBody):
