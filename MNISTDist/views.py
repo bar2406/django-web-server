@@ -35,7 +35,7 @@ def getNeuralNet(request):
     return neural network model - neuralNet
     '''
     response=FileResponse(open(getPrivateNeuralNet(), 'rb'))
-    response['Content-Disposition'] = 'attachment; filename=NeuralNet.npz'
+    response['Content-Disposition'] = 'attachment; filename=nerualNetFile.npz'
     return response
 
 
