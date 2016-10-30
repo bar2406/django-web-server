@@ -82,6 +82,7 @@ def parsePostDataParameters(rquestBody):
     #tempFilePath=path+r"\Data.npz"
     computedResult = data[computedResult'']
 
+    currentMiniBatch=
     #update NeuralNet
     
     return (deviceID, epochNumber, computingTime, computedResult)
@@ -93,11 +94,16 @@ def dataIsRelevant(Device):
     '''
     return True
 
-def updateNeuralNet(compResult):
+def updateNeuralNet(delta):
     '''
     receives compResult which is a delta of the neuralNet and updates the neuralNet
     '''
-    #DOES SOMTHING
+    neuralNet=np.load(path+r"nerualNetFile.npz")    #TODO - perhaps we need to use  chainer.serializers.load_npz instead of np.load
+    newNeuralNet=dict(neuralNet)
+    for f in neuralNet.files:
+        newNeuralNet[f]=neuralNet[f]+delta[f]
+    neuralNet.close()
+    np.savez(path+r"nerualNetFile.npz",newNeuralNet)#TODO - perhaps we need to use  chainer.serializers.load_npz instead of np.load
     return True
 
 def updateEpochStats(compResult):
