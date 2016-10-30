@@ -74,11 +74,16 @@ def parsePostDataParameters(rquestBody):
     Parse the data that was posted from the deivce and return the parameters (in that order):
     deviceID, epochNumber, computingTime, computedResult
     '''
-    deviceID = 1
-    epochNumber = 1
-    computingTime = 1
-    tempFilePath=path+r"\Data.npz"
-    computedResult = tempFilePath
+    jsonDec = json.decoder.JSONDecoder()
+    data=jsonDec.decode(rquestBody)
+    deviceID = data['deviceId']
+    epochNumber = data['epochNumber']
+    computingTime = data['computingTime']
+    #tempFilePath=path+r"\Data.npz"
+    computedResult = data[computedResult'']
+
+    #update NeuralNet
+    
     return (deviceID, epochNumber, computingTime, computedResult)
 
 def dataIsRelevant(Device):
