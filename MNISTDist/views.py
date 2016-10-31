@@ -72,10 +72,10 @@ def postData(request):
     Server will not send anything back
     '''
     if request.method == 'POST': #POST because device is sending the parameters mentioned above
-        (devID, epochNumber, computingTime, computedResult) = parsePostDataParameters(request.body)
+        (devID,miniBatchID, epochNumber, computingTime, computedResult) = parsePostDataParameters(request.body)
         currentDevice = Device.objects.get(deviceID = devID)
-        if dataIsRelevant(currentDevice): #TODO - check if data from device is relevant (server didn't drop its result for irrelevence-if too much time has passed)
-            currentMiniBatch=MiniBatch.objects.get(deviceID = currentDevice.deviceID)
+        currentMiniBatch = MiniBatch.objects.get(minibatchID=miniBatchID)
+        if dataIsRelevant(currentDevice,currentMiniBatch): #TODO - check if data from device is relevant (server didn't drop its result for irrelevence-if too much time has passed)
             currentMiniBatch.status=2
             currentMiniBatch.save()
             if currentMiniBatch.isTrain:
@@ -84,5 +84,5 @@ def postData(request):
                 updateEpochStats(computedResult)
         currentDevice.lastActiveTime=timezone.now()
         #AvgTrainingTime=models.FloatField() 	#average minibatch training time. 
-        #AvgValTime=models.FloatField() 	#average minibatch validation time. 
+        #AvgValTime=models.FloatField() 	#average minibatch validation time.
         return HttpResponse("thanks")

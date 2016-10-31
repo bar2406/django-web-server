@@ -80,30 +80,30 @@ def parsePostDataParameters(rquestBody):
     jsonDec = json.decoder.JSONDecoder()
     data = jsonDec.decode(body_unicode)
     deviceID = data['deviceId']
+    miniBatchID = data['miniBatchID']
     epochNumber = data['epochNumber']
     computingTime = data['computingTime']
     computingTime=0 #TODO - temp
     computedResult = data['computedResult']
 
-    return (deviceID, epochNumber, computingTime, computedResult)
+    return  (deviceID,miniBatchID, epochNumber, computingTime, computedResult)
 
-def dataIsRelevant(Device):
+def dataIsRelevant(Device,Batch):
     '''
     decides if the results of the device are relevant. can do it based on timeout from assignment or from how many minibatches were completed since this minibatch.
         special case-if results are validation
     '''
-    currentMiniBatch = MiniBatch.objects.get(deviceID=Device.deviceID)
-    if currentMiniBatch.status==2:
+    if Batch.status==2:
         return False    #means somebody already computed this minibatch
-    if currentMiniBatch.status !=1:
+    if Batch.status !=1:
         raise RuntimeError('error 2606: minibatch with status=0 is somehow done....')   #just a sanity check
-    if Device.isTrain==False:
+    if Batch.isTrain==False:
         return True     #validation is always relevant
     earlierBatches=0
-    for batch in MiniBatch.objects.all().order_by('startComputingTime'):    #counting how many minibatches were completed since current minibatch was issued
-        if batch.status==2 and batch.startComputingTime<currentMiniBatch.startComputingTime:
+    for tempbatch in MiniBatch.objects.all().order_by('startComputingTime'):    #counting how many minibatches were completed since current minibatch was issued
+        if tempbatch.status==2 and tempbatch.startComputingTime<Batch.startComputingTime:
             earlierBatches=earlierBatches+1
-    if earlierBatches>(5*max(currentMiniBatch.epochID,5)):    #the idea is that in early epochs, deltas are big and so computing results get outdated faster then in late epochs. TODO - the 5s are arbitrary numbers
+    if earlierBatches>(5*max(Batch.epochID,5)):    #the idea is that in early epochs, deltas are big and so computing results get outdated faster then in late epochs. TODO - the 5s are arbitrary numbers
         return False
     return True
 
