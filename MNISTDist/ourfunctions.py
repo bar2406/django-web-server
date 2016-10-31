@@ -51,6 +51,7 @@ def getSubsetData(DeviceID):
     currentBatch.status=1
     currentBatch.startComputingTime=timezone.now()
     currentBatch.save()
+    #TODO - perhaps update Device to correct minibatchID. i think its unnecessary and that Device.minibatchID is redundant field
 
     #create return valuse
     isTrain=currentBatch.isTrain
@@ -82,7 +83,6 @@ def parsePostDataParameters(rquestBody):
     epochNumber = data['epochNumber']
     computingTime = data['computingTime']
     computingTime=0 #TODO - temp
-    #tempFilePath=path+r"\Data.npz"
     computedResult = data['computedResult']
 
     return (deviceID, epochNumber, computingTime, computedResult)
@@ -92,7 +92,22 @@ def dataIsRelevant(Device):
     decides if the results of the device are relevant. can do it based on timeout from assignment or from how many minibatches were completed since this minibatch.
         special case-if results are validation
     '''
+    currentMiniBatch = MiniBatch.objects.get(deviceID=Device.deviceID)
+    if currentMiniBatch.status==2:
+        return False    #means somebody already computed this minibatch
+    if currentMiniBatch.status !=1:
+        raise RuntimeError('error 2606: minibatch with status=0 is somehow done....')   #just a sanity check
+    if Device.isTrain==False:
+        return True     #validation is always relevant
+    earlierBatches=0
+    for batch in MiniBatch.objects.all().order_by('startComputingTime'):    #counting how many minibatches were completed since current minibatch was issued
+        if batch.status==2 and batch.startComputingTime<currentMiniBatch.startComputingTime:
+            earlierBatches=earlierBatches+1
+    if earlierBatches>(5*max(currentMiniBatch.epochID,5)):    #the idea is that in early epochs, deltas are big and so computing results get outdated faster then in late epochs. TODO - the 5s are arbitrary numbers
+        return False
     return True
+
+
 
 def updateNeuralNet(delta):
     '''
@@ -151,10 +166,13 @@ def checkEpochDone():
     '''
     return true if latest epoch is done. false otherwise. validation starts when epoch is done
     p.s even if epoch is done it dosen't mean that we dont allow new deltas from that epoch.
-        it just means that all of the minibathces were allocated, certien percentage of them is done 
-        (and all validation results are done?)
+        it just means that all of the minibathces were allocated, certain percentage of them is done
     '''
-    return False
+    if MiniBatch.objects.filter(status=0) !=0:
+        return False    #not all bathes are allocated to devices
+    if (MiniBatch.objects.filter(status=1).count()/MiniBatch.objects.filter.count()) <0.95: #TODO - 95% is arbitrary
+        return False    #less the 95% of batches are done
+    return True         #all batches are allocated and more then 95% of them are done
 
 def _fetchNextMiniBatch():
     '''
