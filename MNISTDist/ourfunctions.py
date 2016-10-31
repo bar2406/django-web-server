@@ -75,16 +75,16 @@ def parsePostDataParameters(rquestBody):
     deviceID, epochNumber, computingTime, computedResult
     '''
     jsonDec = json.decoder.JSONDecoder()
-    data=jsonDec.decode(rquestBody)
+    body_unicode = rquestBody.decode('utf-8') #this is only needed in python 3. I hope it doesn't cause issues in python 2
+    jsonDec = json.decoder.JSONDecoder()
+    data = jsonDec.decode(body_unicode)
     deviceID = data['deviceId']
     epochNumber = data['epochNumber']
     computingTime = data['computingTime']
+    computingTime=0 #TODO - temp
     #tempFilePath=path+r"\Data.npz"
-    computedResult = data[computedResult'']
+    computedResult = data['computedResult']
 
-    currentMiniBatch=
-    #update NeuralNet
-    
     return (deviceID, epochNumber, computingTime, computedResult)
 
 def dataIsRelevant(Device):
@@ -98,15 +98,15 @@ def updateNeuralNet(delta):
     '''
     receives compResult which is a delta of the neuralNet and updates the neuralNet
     '''
-    neuralNet=np.load(path+r"nerualNetFile.npz")    #TODO - perhaps we need to use  chainer.serializers.load_npz instead of np.load
+    neuralNet=numpy.load(path+r"\nerualNetFile.npz")    #TODO - perhaps we need to use  chainer.serializers.load_npz instead of np.load
     newNeuralNet=dict(neuralNet)
     for f in neuralNet.files:
         newNeuralNet[f]=neuralNet[f]+delta[f]
     neuralNet.close()
-    np.savez(path+r"nerualNetFile.npz",newNeuralNet)#TODO - perhaps we need to use  chainer.serializers.load_npz instead of np.load
+    numpy.savez(path+r"\nerualNetFile.npz",newNeuralNet)#TODO - perhaps we need to use  chainer.serializers.load_npz instead of np.load
     return True
 
-def updateEpochStats(compResult):
+def updateEpochStats(compResult,sizeOfValidationMiniBatch = 1000):
     '''
     receives compResult which is hit rate and number of inputs it was calculated on and updates epoch stats in the database
     '''
