@@ -75,8 +75,9 @@ def postData(request):
         (devID, epochNumber, computingTime, computedResult) = parsePostDataParameters(request.body)
         currentDevice = Device.objects.get(deviceID = devID)
         if dataIsRelevant(currentDevice): #TODO - check if data from device is relevant (server didn't drop its result for irrelevence-if too much time has passed)
-            currentMiniBatch=MiniBatch.objects.get(minibatchID = currentDevice.minibatchID)
+            currentMiniBatch=MiniBatch.objects.get(deviceID = currentDevice.deviceID)
             currentMiniBatch.status=2
+            currentMiniBatch.save()
             if currentMiniBatch.isTrain:
                 updateNeuralNet(computedResult)
             else :
