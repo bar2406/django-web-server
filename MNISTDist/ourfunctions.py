@@ -94,17 +94,18 @@ def dataIsRelevant(Device,Batch):
         special case-if results are validation
     '''
     if Batch.status==2:
-        return False    #means somebody already computed this minibatch
+        return False    #means somebody already computed this minibatch. TODO - what happens if we allocated this minibatch twice? do we accept the first or the latter?
     if Batch.status !=1:
         raise RuntimeError('error 2606: minibatch with status=0 is somehow done....')   #just a sanity check
     if Batch.isTrain==False:
         return True     #validation is always relevant
     earlierBatches=0
     for tempbatch in MiniBatch.objects.all().order_by('startComputingTime'):    #counting how many minibatches were completed since current minibatch was issued
-        if tempbatch.status==2 and tempbatch.startComputingTime<Batch.startComputingTime:
+        if tempbatch.status==2 and tempbatch.startComputingTime>Batch.startComputingTime:
             earlierBatches=earlierBatches+1
-    if earlierBatches>(5*max(Batch.epochID,5)):    #the idea is that in early epochs, deltas are big and so computing results get outdated faster then in late epochs. TODO - the 5s are arbitrary numbers
+    if earlierBatches>(5*max(Batch.epochID,5)):
         return False
+
     return True
 
 
@@ -168,9 +169,9 @@ def checkEpochDone():
     p.s even if epoch is done it dosen't mean that we dont allow new deltas from that epoch.
         it just means that all of the minibathces were allocated, certain percentage of them is done
     '''
-    if MiniBatch.objects.filter(status=0) !=0:
+    if MiniBatch.objects.filter(status=0).filter(isTrain=1).count() !=0:
         return False    #not all bathes are allocated to devices
-    if (MiniBatch.objects.filter(status=1).count()/MiniBatch.objects.filter.count()) <0.95: #TODO - 95% is arbitrary
+    if (MiniBatch.objects.filter(status=2).filter(isTrain=1).count()/MiniBatch.objects.filter(isTrain=1).count()) <0.95: #TODO - 95% is arbitrary
         return False    #less the 95% of batches are done
     return True         #all batches are allocated and more then 95% of them are done
 
