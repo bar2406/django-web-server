@@ -7,7 +7,12 @@ import json
 import os.path
 
 #path=r"D:\ProjectA"
-path=r"C:\temp"
+#path=r"C:\temp"
+path=os.getcwd()+r"\files4runtime"
+try:
+    os.makedirs(path)
+except:
+    pass
 MNIST_DATASET_SIZE=60000    #TODO - for robustness, perhaps actually importing the data base and checking its size 
 #defining neuralNet, should be static and global(?) variable
 class MLP(chainer.Chain):
@@ -64,7 +69,7 @@ def getSubsetData(DeviceID):
 def getPrivateNeuralNet():
 	#TODO - this will recreate the net every time. this is bad, neuralNet should be static. no idea how to do that. cant have it as a class though.
 	#it needs to be of type L.Classifier(MLP(784, 10, 10). noam this is YOUR PROBLEM :-)
-    if not os.path.isfile('nerualNetFile.npz'):
+    if not os.path.isfile(path+'nerualNetFile.npz'):
         neuralNet=chainer.serializers.save_npz(path+r'\nerualNetFile.npz', L.Classifier(MLP(784, 10, 10)),True)
     #chainer.serializers.save_npz(path+r"\neuralNet.npz",neuralNet)
     return path+r"\nerualNetFile.npz"

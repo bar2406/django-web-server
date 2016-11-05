@@ -7,3 +7,5 @@ MNISTDist/migrations/000*
 obj/*
 bin/Microsoft.PythonTools.WebRole.dll
 MNISTDist/.idea/workspace.xml
+files4runtime/*
+MNISTDist/.idea/workspace.xml

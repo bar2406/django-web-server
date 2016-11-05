@@ -6,9 +6,11 @@ import numpy
 from django.http import FileResponse
 from .ourfunctions import *
 from django.http import HttpResponse
+import os
 
 #path=r"D:\ProjectA"
-path=r"C:\temp"
+#path=r"C:\temp"
+path=os.getcwd()+r"\files4runtime"
 
 # Create your views here.
 def home(request):
@@ -38,6 +40,21 @@ def getNeuralNet(request):
     response['Content-Disposition'] = 'attachment; filename=nerualNetFile.npz'
     return response
 
+def getTrainSet(request):
+    '''
+    return training set. in our case, returns train.npz of MNIST
+    '''
+    response=FileResponse(open(path+r"\train.npz", 'rb'))
+    response['Content-Disposition'] = 'attachment; filename=train.npz'
+    return response
+
+def getTestSet(request):
+    '''
+    return test set. in our case, returns test.npz of MNIST
+    '''
+    response=FileResponse(open(path+r"\test.npz", 'rb'))
+    response['Content-Disposition'] = 'attachment; filename=test.npz'
+    return response
 
 def getData(request): 
     '''
