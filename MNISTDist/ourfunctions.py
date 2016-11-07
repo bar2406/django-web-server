@@ -131,6 +131,12 @@ def updateEpochStats(compResult,sizeOfValidationMiniBatch = 1000):
     '''
     receives compResult which is hit rate and number of inputs it was calculated on and updates epoch stats in the database
     '''
+    curr_epoch=Epoch.objects.order_by('epochID')[-2] #if current epoch is n, we validate the n-1 epoch
+    number_of_done_val_batches=MiniBatch.objects.filter(epochID=curr_epoch.epochID).filter(isTrain=False).filter(status=2)
+    curr_epoch.hitRate=numpy.average([curr_epoch.hitRate*(number_of_done_val_batches-1),compResult]) 
+    curr_epoch.save()
+    if MiniBatch.objects.filter(epochID=curr_epoch.epochID).filter(isTrain=False).exclude(status=2) == 0: #means all validation batches are done
+        curr_epoch.finishTime=timezone.now()
     #does somthing
     return True
 
