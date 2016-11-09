@@ -33,13 +33,14 @@ class Device(models.Model):
     lastActiveTime=models.DateTimeField()   #last time this device reqeusted data.
     #numOfDataSetsGiven=models.IntegerField()    #some way of marking how much work this device has done
     totalDataSetsGiven=models.IntegerField()
-    AvgTrainingTime=models.FloatField() 	#average minibatch training time. 
-    AvgValTime=models.FloatField() 	#average minibatch validation time. 
+    totalDataSetsRelevant=models.IntegerField()
+    avgComputingTime=models.FloatField() 	#average minibatch training time in seconds. 
+    #AvgValTime=models.FloatField() 	#average minibatch validation time. 
 
     #last minibatch data
-    minibatchID=models.IntegerField()   #some ID of the current minibatch this device is working on. not sure its actually an int
+    minibatchID=models.IntegerField(null=True)   #some ID of the current minibatch this device is working on. not sure its actually an int
     #minibatchIDSQL=models.ForeignKey(MiniBatch, on_delete=models.CASCADE)   #some ID of the current minibatch this device is working on. not sure its actually an int
-    epoch=models.IntegerField() #from what epoch this minibatch is from
+    epoch=models.IntegerField(null=True) #from what epoch this minibatch is from
 
     def __str__(self):
         return str(self.deviceID) + ", " + self.deviceModel
@@ -53,9 +54,10 @@ class MiniBatch(models.Model):
     isTrain=models.BooleanField(default=True)
     deviceID=models.IntegerField(null=True)    #unique device ID
     #deviceIDSQL=models.ForeignKey(Device, on_delete=models.CASCADE)
-    status=models.IntegerField()    #0-not asssigned 1-assigned and not completed 2-done
+    status=models.IntegerField(default=0)    #0-not asssigned 1-assigned and not completed 2-done
     startComputingTime=models.DateTimeField(null=True)
-    
+    finishComputingTime=models.DateTimeField(null=True)
+
     def __str__(self):
         return "minibatchID: " + str(self.minibatchID)
 

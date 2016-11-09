@@ -28,7 +28,7 @@ def imalive(request):
     if request.method == 'POST': #POST because device is sending its type(model)
         idNum = Device.objects.count() + 1
         #Device.objects.create(deviceID=idNum, deviceModel=request.body, connection_time=timezone.now(), lastActiveTime=timezone.now(), numOfDataSetsGiven=0,  AvgTrainingTime=0, AvgValTime=0, minibatchID=None, epoch=None)
-        Device.objects.create(deviceID=idNum, deviceModel=request.body, connection_time=timezone.now(), lastActiveTime=timezone.now(), totalDataSetsGiven=0, AvgTrainingTime=0, AvgValTime=0, minibatchID=1, epoch=1)
+        Device.objects.create(deviceID=idNum, deviceModel=request.body, connection_time=timezone.now(), lastActiveTime=timezone.now(), totalDataSetsGiven=0, totalDataSetsRelevant=0, avgComputingTime=0)
         dataSetURL = "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz" #TODO - give it the real URL that is needed, maybe more URLs are needed
         return HttpResponse("ID: " + str(idNum) + " " + "train-images: " + dataSetURL)
 
@@ -93,13 +93,17 @@ def postData(request):
         currentDevice = Device.objects.get(deviceID = devID)
         currentMiniBatch = MiniBatch.objects.get(minibatchID=miniBatchID)
         if dataIsRelevant(currentDevice,currentMiniBatch): #TODO - check if data from device is relevant (server didn't drop its result for irrelevence-if too much time has passed)
+            #updating stats
+            currentDevice.lastActiveTime=timezone.now()
+            currentComputTime=currentMiniBatch.startComputingTime-timezone.now()
+            currentDevice.avgComputingTime=(currentDevice.avgComputingTime*currentDevice.totalDataSetsRelevant+currentComputTime.seconds)/(currentDevice.totalDataSetsRelevant+1)
+            currentDevice.totalDataSetsRelevant=currentDevice.totalDataSetsRelevant+1
+            currentDevice.save()
             currentMiniBatch.status=2
+            currentMiniBatch.finishComputingTime=timezone.now()
             currentMiniBatch.save()
             if currentMiniBatch.isTrain:
                 updateNeuralNet(computedResult)
             else :
                 updateEpochStats(computedResult)
-        currentDevice.lastActiveTime=timezone.now()
-        #AvgTrainingTime=models.FloatField() 	#average minibatch training time. 
-        #AvgValTime=models.FloatField() 	#average minibatch validation time.
         return HttpResponse("thanks")
