@@ -10,7 +10,7 @@ import os
 
 #path=r"D:\ProjectA"
 #path=r"C:\temp"
-path=os.getcwd()+r"\files4runtime"
+path=os.getcwd()
 
 # Create your views here.
 def home(request):
@@ -44,7 +44,7 @@ def getTrainSet(request):
     '''
     return training set. in our case, returns train.npz of MNIST
     '''
-    response=FileResponse(open(path+r"\train.npz", 'rb'))
+    response=FileResponse(open(path+r"\MNIST_data_set\train.npz", 'rb'))
     response['Content-Disposition'] = 'attachment; filename=train.npz'
     return response
 
@@ -52,7 +52,7 @@ def getTestSet(request):
     '''
     return test set. in our case, returns test.npz of MNIST
     '''
-    response=FileResponse(open(path+r"\test.npz", 'rb'))
+    response=FileResponse(open(path+r"\MNIST_data_set\test.npz", 'rb'))
     response['Content-Disposition'] = 'attachment; filename=test.npz'
     return response
 
@@ -69,7 +69,7 @@ def getData(request):
         else:
             (isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData(devID)
             calculateStats(Device.objects.get(deviceID = devID), minibatchID, epochNumber)
-            tempFilePath=path+r"\Data.npz"
+            tempFilePath=path+r"\files4runtime\Data.npz"
             numpy.savez(tempFilePath, isTrain = isTrain, minibatchID = minibatchID, epochNumber = epochNumber, subsetDataForDevice = subsetDataForDevice)
             response=FileResponse(open(tempFilePath, 'rb'))
             response['Content-Disposition'] = 'attachment; filename=Data.npz'
