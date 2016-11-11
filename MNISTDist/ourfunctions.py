@@ -131,11 +131,11 @@ def updateEpochStats(compResult,sizeOfValidationMiniBatch = 1000):
     '''
     receives compResult which is hit rate and number of inputs it was calculated on and updates epoch stats in the database
     '''
-    curr_epoch=Epoch.objects.order_by('epochID')[-2] #if current epoch is n, we validate the n-1 epoch
-    number_of_done_val_batches=MiniBatch.objects.filter(epochID=curr_epoch.epochID).filter(isTrain=False).filter(status=2)
+    curr_epoch=Epoch.objects.order_by('-epochID')[1] #if current epoch is n, we validate the n-1 epoch
+    number_of_done_val_batches=MiniBatch.objects.filter(epochID=curr_epoch.epochID).filter(isTrain=False).filter(status=2).count()
     curr_epoch.hitRate=numpy.average([curr_epoch.hitRate*(number_of_done_val_batches-1),compResult]) 
     curr_epoch.save()
-    if MiniBatch.objects.filter(epochID=curr_epoch.epochID).filter(isTrain=False).exclude(status=2) == 0: #means all validation batches are done
+    if MiniBatch.objects.filter(epochID=curr_epoch.epochID).filter(isTrain=False).exclude(status=2).count() == 0: #means all validation batches are done
         curr_epoch.finishTime=timezone.now()
     #does somthing
     return True
@@ -199,10 +199,11 @@ def _fetchNextMiniBatch():
 
     #2 priority: assigned (and not done) validation batches from previous epoch that are over X time old
     if Epoch.objects.count() > 1:
-        tempBatch=MiniBatch.objects.filter(status=1).exclude(isTrain=True).filter(epochID=Epoch.objects.count()-1).order_by('startComputingTime')[0]
-        delta=timezone.now()-tempBatch.startComputingTime
-        if(delta.seconds>60*15): #means X=15
-            return tempBatch
+        if MiniBatch.objects.filter(status=1).exclude(isTrain=True).filter(epochID=Epoch.objects.count()-1).order_by('startComputingTime').count() !=0 :
+            tempBatch=MiniBatch.objects.filter(status=1).exclude(isTrain=True).filter(epochID=Epoch.objects.count()-1).order_by('startComputingTime')[0]
+            delta=timezone.now()-tempBatch.startComputingTime
+            if(delta.seconds>60*15): #means X=15
+                return tempBatch
 
     #3 priority: unassigned training batches from current epoch
     if MiniBatch.objects.filter(status=0).filter(isTrain=True).filter(epochID=Epoch.objects.count()).count() != 0:
