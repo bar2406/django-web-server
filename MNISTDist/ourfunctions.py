@@ -6,15 +6,15 @@ from django.utils import timezone
 import json
 import os.path
 
-#path=r"D:\ProjectA"
-#path=r"C:\temp"
+
 path=os.getcwd()+r"\files4runtime"
 try:
     os.makedirs(path)
 except:
     pass
-MNIST_DATASET_SIZE=60000    #TODO - for robustness, perhaps actually importing the data base and checking its size 
-#defining neuralNet, should be static and global(?) variable
+
+MNIST_DATASET_SIZE=60000    #for robustness, it is possiable to import the data base and checking its size 
+
 class MLP(chainer.Chain):
 
     def __init__(self, n_in, n_units, n_out):
@@ -28,14 +28,6 @@ class MLP(chainer.Chain):
         h1 = F.relu(self.l1(x))
         h2 = F.relu(self.l2(h1))
         return self.l3(h2)
-
-'''class neuralNet:
-    neuralNetArg = None
-    def __init__(self):
-        self.neuralNetArg = L.Classifier(MLP(784, 10, 10))
-'''
-
-
 
 def getSubsetData(DeviceID):
     '''
@@ -56,7 +48,6 @@ def getSubsetData(DeviceID):
     currentBatch.status=1
     currentBatch.startComputingTime=timezone.now()
     currentBatch.save()
-    #TODO - perhaps update Device to correct minibatchID. i think its unnecessary and that Device.minibatchID is redundant field
 
     #create return valuse
     isTrain=currentBatch.isTrain
@@ -67,11 +58,8 @@ def getSubsetData(DeviceID):
     return isTrain ,subsetDataForDevice, minibatchID, epochNumber
 
 def getPrivateNeuralNet():
-	#TODO - this will recreate the net every time. this is bad, neuralNet should be static. no idea how to do that. cant have it as a class though.
-	#it needs to be of type L.Classifier(MLP(784, 10, 10). noam this is YOUR PROBLEM :-)
     if not os.path.isfile(path+'nerualNetFile.npz'):
-        neuralNet=chainer.serializers.save_npz(path+r'\nerualNetFile.npz', L.Classifier(MLP(784, 10, 10)),True)
-    #chainer.serializers.save_npz(path+r"\neuralNet.npz",neuralNet)
+        neuralNet=chainer.serializers.save_npz(path+r'\nerualNetFile.npz', L.Classifier(MLP(784, 300, 10)),True)
     return path+r"\nerualNetFile.npz"
 
 
@@ -81,14 +69,14 @@ def parsePostDataParameters(rquestBody):
     deviceID, epochNumber, computingTime, computedResult
     '''
     jsonDec = json.decoder.JSONDecoder()
-    body_unicode = rquestBody.decode('utf-8') #this is only needed in python 3. I hope it doesn't cause issues in python 2
+    body_unicode = rquestBody.decode('utf-8') #this is only needed in python 3
     jsonDec = json.decoder.JSONDecoder()
     data = jsonDec.decode(body_unicode)
     deviceID = data['deviceId']
     miniBatchID = data['miniBatchID']
     epochNumber = data['epochNumber']
     computingTime = data['computingTime']
-    computingTime=0 #TODO - temp
+    computingTime=0 #TODO - maybe actually get it from device
     computedResult = data['computedResult']
 
     return  (deviceID,miniBatchID, epochNumber, computingTime, computedResult)
@@ -99,7 +87,7 @@ def dataIsRelevant(Device,Batch):
         special case-if results are validation
     '''
     if Batch.status==2:
-        return False    #means somebody already computed this minibatch. TODO - what happens if we allocated this minibatch twice? do we accept the first or the latter?
+        return False    #means somebody already computed this minibatch
     if Batch.status !=1:
         raise RuntimeError('error 2606: minibatch with status=0 is somehow done....')   #just a sanity check
     if Batch.isTrain==False:
@@ -113,18 +101,16 @@ def dataIsRelevant(Device,Batch):
 
     return True
 
-
-
 def updateNeuralNet(delta):
     '''
     receives compResult which is a delta of the neuralNet and updates the neuralNet
     '''
-    neuralNet=numpy.load(path+r"\nerualNetFile.npz")    #TODO - perhaps we need to use  chainer.serializers.load_npz instead of np.load
+    neuralNet=numpy.load(path+r"\nerualNetFile.npz")
     newNeuralNet=dict(neuralNet)
     for f in neuralNet.files:
         newNeuralNet[f]=neuralNet[f]+delta[f]
     neuralNet.close()
-    numpy.savez(path+r"\nerualNetFile.npz",newNeuralNet)#TODO - perhaps we need to use  chainer.serializers.load_npz instead of np.load
+    numpy.savez(path+r"\nerualNetFile.npz",newNeuralNet)
     return True
 
 def updateEpochStats(compResult,sizeOfValidationMiniBatch = 1000):
@@ -134,10 +120,9 @@ def updateEpochStats(compResult,sizeOfValidationMiniBatch = 1000):
     curr_epoch=Epoch.objects.order_by('-epochID')[1] #if current epoch is n, we validate the n-1 epoch
     number_of_done_val_batches=MiniBatch.objects.filter(epochID=curr_epoch.epochID).filter(isTrain=False).filter(status=2).count()
     curr_epoch.hitRate=numpy.average([curr_epoch.hitRate*(number_of_done_val_batches-1),compResult]) 
-    curr_epoch.save()
     if MiniBatch.objects.filter(epochID=curr_epoch.epochID).filter(isTrain=False).exclude(status=2).count() == 0: #means all validation batches are done
         curr_epoch.finishTime=timezone.now()
-    #does somthing
+    curr_epoch.save()
     return True
 
 def calculateStats(deviceObj, minibatchID, epochNumber):
@@ -153,15 +138,15 @@ def _initEpoch():
     '''
     creat and initialize the next epoch with standart stats
     '''
-    Epoch.objects.create(epochID = Epoch.objects.count()+1, startingTime = timezone.now(), finishTime = timezone.now(), hitRate = 0) #TODO - finishTime,hitRate are unknown. better if they would be None
+    Epoch.objects.create(epochID = Epoch.objects.count()+1, startingTime = timezone.now(), finishTime = None, hitRate = 0) #TODO - finishTime,hitRate are unknown. better if they would be None
 
 def _creatMiniBatch(imageIndices,epochID,isTrain):
     '''
     create and initialize MiniBatch 
     '''
-    MiniBatch.objects.create(minibatchID = MiniBatch.objects.count()+1, imageIndices = json.dumps(imageIndices.tolist()), epochID = epochID, isTrain = isTrain, deviceID = None, status = 0, startComputingTime = None) 
+    MiniBatch.objects.create(minibatchID = MiniBatch.objects.count()+1, imageIndices = json.dumps(imageIndices.tolist()), epochID = epochID, isTrain = isTrain, deviceID = None, status = 0, startComputingTime = None)
 
-def _initMiniBatches(batchsize = 1000,valSize = 5000):
+def _initMiniBatches(batchsize = 1000,valSize = 5000): #valSize = validate set size
     '''
     creates all minibatches for latest epoch.
     randomly orders mnist into minibatches, and devides them into training and validation batches.
@@ -181,9 +166,9 @@ def checkEpochDone():
         it just means that all of the minibathces were allocated, certain percentage of them is done
     '''
     if MiniBatch.objects.filter(status=0).filter(isTrain=1).count() !=0:
-        return False    #not all bathes are allocated to devices
-    if (MiniBatch.objects.filter(status=2).filter(isTrain=1).count()/MiniBatch.objects.filter(isTrain=1).count()) <0.95: #TODO - 95% is arbitrary
-        return False    #less the 95% of batches are done
+        return False    #not all batches are allocated to devices
+    if (MiniBatch.objects.filter(status=2).filter(isTrain=1).count()/MiniBatch.objects.filter(isTrain=1).count()) <0.95: # 95% is arbitrary, can be changed
+        return False    #less then 95% of batches are done
     return True         #all batches are allocated and more then 95% of them are done
 
 def _fetchNextMiniBatch():
@@ -202,7 +187,7 @@ def _fetchNextMiniBatch():
         if MiniBatch.objects.filter(status=1).exclude(isTrain=True).filter(epochID=Epoch.objects.count()-1).order_by('startComputingTime').count() !=0 :
             tempBatch=MiniBatch.objects.filter(status=1).exclude(isTrain=True).filter(epochID=Epoch.objects.count()-1).order_by('startComputingTime')[0]
             delta=timezone.now()-tempBatch.startComputingTime
-            if(delta.seconds>60*15): #means X=15
+            if(delta.seconds>60*15): #means X=15 minutes
                 return tempBatch
 
     #3 priority: unassigned training batches from current epoch

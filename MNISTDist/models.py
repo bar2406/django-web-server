@@ -1,23 +1,3 @@
-"""import datetime
-from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
-from django.utils import timezone
-# Create your models here.
-
-@python_2_unicode_compatible  # only if you need to support Python 2
-class device(models.Model):
-
-    #device stats
-    #deviceID=models.IntegerField()    #unique device ID
-    #devicemodel = models.CharField(max_length=200)  #device model i.e "Sony Xperia Z3 Compact"
-    #connection_time = models.DateTimeField()   #time of reciveving "im alive" signal from this device
-    #lastactivetime=models.DateTimeField()   #last time this device reqeusted data.
-    #totaldatasetsgiven=models.IntegerField()    #some way of marking how much work this device has done
-    
-    #last minibatch data
-    #minibatchID=models.IntegerField()   #some ID of the current minibatch this device is working on. not sure its actually an int
-    #epoch=models.IntegerField() #from what epoch this minibatch is from
-"""
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
@@ -30,17 +10,11 @@ class Device(models.Model):
     deviceID=models.IntegerField(primary_key=True)    #unique device ID
     deviceModel = models.CharField(max_length=200)  #device model i.e "Sony Xperia Z3 Compact"
     connection_time = models.DateTimeField()   #time of reciveving "im alive" signal from this device
-    lastActiveTime=models.DateTimeField()   #last time this device reqeusted data.
-    #numOfDataSetsGiven=models.IntegerField()    #some way of marking how much work this device has done
+    lastActiveTime=models.DateTimeField()   #last time this device reqeusted data
     totalDataSetsGiven=models.IntegerField()
     totalDataSetsRelevant=models.IntegerField()
-    avgComputingTime=models.FloatField() 	#average minibatch training time in seconds. 
-    #AvgValTime=models.FloatField() 	#average minibatch validation time. 
-
-    #last minibatch data
-    minibatchID=models.IntegerField(null=True)   #some ID of the current minibatch this device is working on. not sure its actually an int
-    #minibatchIDSQL=models.ForeignKey(MiniBatch, on_delete=models.CASCADE)   #some ID of the current minibatch this device is working on. not sure its actually an int
-    epoch=models.IntegerField(null=True) #from what epoch this minibatch is from
+    avgComputingTime=models.FloatField() 	#average minibatch training time in seconds - TODO - compute it manually if needed
+    #AvgValTime=models.FloatField() 	#average minibatch validation time - TODO - compute it manually if needed
 
     def __str__(self):
         return str(self.deviceID) + ", " + self.deviceModel
@@ -48,12 +22,10 @@ class Device(models.Model):
 @python_2_unicode_compatible  # only if you need to support Python 2
 class MiniBatch(models.Model):
     minibatchID=models.IntegerField(primary_key=True)   #some ID of the current minibatch this device is working on. not sure its actually an int
-    imageIndices=models.TextField(null=True)	#TODO - this can be decode using JSON. see at http://stackoverflow.com/questions/1110153/what-is-the-most-efficent-way-to-store-a-list-in-the-django-models
+    imageIndices=models.TextField(null=True)
     epochID=models.IntegerField()
-    #epochIDSQL=models.ForeignKey(Epoch, on_delete=models.CASCADE)
     isTrain=models.BooleanField(default=True)
     deviceID=models.IntegerField(null=True)    #unique device ID
-    #deviceIDSQL=models.ForeignKey(Device, on_delete=models.CASCADE)
     status=models.IntegerField(default=0)    #0-not asssigned 1-assigned and not completed 2-done
     startComputingTime=models.DateTimeField(null=True)
     finishComputingTime=models.DateTimeField(null=True)
@@ -70,6 +42,3 @@ class Epoch(models.Model):
 
     def __str__(self):
         return "epochID: " + str(self.epochID)
-
-
-    

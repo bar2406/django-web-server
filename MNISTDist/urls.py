@@ -3,7 +3,6 @@ from django.conf.urls import url
 from . import views
 
 urlpatterns = [
-    url(r'^home', views.home, name='home'),
     url(r'^imalive', views.imalive, name='imalive'),
 	url(r'^getNeuralNet', views.getNeuralNet, name='getNeuralNet'),
 	url(r'^getTrainSet', views.getTrainSet, name='getTrainSet'),

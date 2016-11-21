@@ -8,17 +8,7 @@ from .ourfunctions import *
 from django.http import HttpResponse
 import os
 
-#path=r"D:\ProjectA"
-#path=r"C:\temp"
 path=os.getcwd()
-
-# Create your views here.
-def home(request):
-    print("here we go\n")
-    if request.method == 'POST':
-        print("here we go again\n")
-        print(request.body)
-    return HttpResponse("home page. here we can display stats about our network and connected devices")
 
 def imalive(request):
     '''
@@ -27,9 +17,8 @@ def imalive(request):
     '''
     if request.method == 'POST': #POST because device is sending its type(model)
         idNum = Device.objects.count() + 1
-        #Device.objects.create(deviceID=idNum, deviceModel=request.body, connection_time=timezone.now(), lastActiveTime=timezone.now(), numOfDataSetsGiven=0,  AvgTrainingTime=0, AvgValTime=0, minibatchID=None, epoch=None)
         Device.objects.create(deviceID=idNum, deviceModel=request.body, connection_time=timezone.now(), lastActiveTime=timezone.now(), totalDataSetsGiven=0, totalDataSetsRelevant=0, avgComputingTime=0)
-        dataSetURL = "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz" #TODO - give it the real URL that is needed, maybe more URLs are needed
+        dataSetURL = "None" # if we want we can put here a URL that the deivce will download the data from
         return HttpResponse("ID: " + str(idNum) + " " + "train-images: " + dataSetURL)
 
 def getNeuralNet(request):
@@ -74,14 +63,6 @@ def getData(request):
             response=FileResponse(open(tempFilePath, 'rb'))
             response['Content-Disposition'] = 'attachment; filename=Data.npz'
             return response
-            '''
-            open on the recieving side should be as simple as: --look on the example for the correct way
-
-            import urllib.request
-            # Download the file from `url` and save it locally under `file_name`:
-            urllib.request.urlretrieve(url, file_name)
-            '''
-            #return HttpResponse("isTrain: " + isTrain + " minibatchID: " + minibatchID + " epochNumber: " + epochNumber + " subsetDataForDevice: " + subsetDataForDevice + " neuralNet: " + neuralNet) #TODO - send subsetDataForDevice and neuralNet as files and not like this
 
 def postData(request):
     '''
@@ -92,7 +73,7 @@ def postData(request):
         (devID,miniBatchID, epochNumber, computingTime, computedResult) = parsePostDataParameters(request.body)
         currentDevice = Device.objects.get(deviceID = devID)
         currentMiniBatch = MiniBatch.objects.get(minibatchID=miniBatchID)
-        if dataIsRelevant(currentDevice,currentMiniBatch): #TODO - check if data from device is relevant (server didn't drop its result for irrelevence-if too much time has passed)
+        if dataIsRelevant(currentDevice,currentMiniBatch): #check if data from device is relevant (server didn't drop its result for irrelevence-if too much time has passed)
             #updating stats
             currentDevice.lastActiveTime=timezone.now()
             currentComputTime=currentMiniBatch.startComputingTime-timezone.now()
@@ -106,4 +87,4 @@ def postData(request):
                 updateNeuralNet(computedResult)
             else :
                 updateEpochStats(computedResult)
-        return HttpResponse("thanks")
+        return HttpResponse("None")
