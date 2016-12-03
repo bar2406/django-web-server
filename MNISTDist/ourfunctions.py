@@ -5,7 +5,7 @@ from .models import *
 from django.utils import timezone
 import json
 import os.path
-
+import chainer
 
 path=os.getcwd()+r"\files4runtime"
 try:
@@ -58,9 +58,9 @@ def getSubsetData(DeviceID):
     return isTrain ,subsetDataForDevice, minibatchID, epochNumber
 
 def getPrivateNeuralNet():
-    if not os.path.isfile(path+'nerualNetFile.npz'):
-        neuralNet=chainer.serializers.save_npz(path+r'\nerualNetFile.npz', L.Classifier(MLP(784, 300, 10)),True)
-    return path+r"\nerualNetFile.npz"
+    if not os.path.isfile(path+r'\neuralNetFile.npz'):
+        neuralNet=chainer.serializers.save_npz(path+r'\neuralNetFile.npz', L.Classifier(MLP(784, 300, 10)),True)
+    return path+r"\neuralNetFile.npz"
 
 
 def parsePostDataParameters(rquestBody):
@@ -68,7 +68,6 @@ def parsePostDataParameters(rquestBody):
     Parse the data that was posted from the deivce and return the parameters (in that order):
     deviceID, epochNumber, computingTime, computedResult
     '''
-    jsonDec = json.decoder.JSONDecoder()
     body_unicode = rquestBody.decode('utf-8') #this is only needed in python 3
     jsonDec = json.decoder.JSONDecoder()
     data = jsonDec.decode(body_unicode)
@@ -105,12 +104,18 @@ def updateNeuralNet(delta):
     '''
     receives compResult which is a delta of the neuralNet and updates the neuralNet
     '''
-    neuralNet=numpy.load(path+r"\nerualNetFile.npz")
-    newNeuralNet=dict(neuralNet)
-    for f in neuralNet.files:
-        newNeuralNet[f]=neuralNet[f]+delta[f]
-    neuralNet.close()
-    numpy.savez(path+r"\nerualNetFile.npz",newNeuralNet)
+    neuralNet=L.Classifier(MLP(784, 300, 10))
+    chainer.serializers.load_npz(path+r"\neuralNetFile.npz",neuralNet)
+    newNeuralNet=L.Classifier(MLP(784, 300, 10))
+    #TODO - again, probably the most arab thing in the world
+    neuralNet.predictor.l1.W.data=neuralNet.predictor.l1.W.data+numpy.array(delta['predictor/l1/W']).astype(numpy.float32)
+    neuralNet.predictor.l1.b.data=neuralNet.predictor.l1.b.data+numpy.array(delta['predictor/l1/b']).astype(numpy.float32)
+    neuralNet.predictor.l2.W.data=neuralNet.predictor.l2.W.data+numpy.array(delta['predictor/l2/W']).astype(numpy.float32)
+    neuralNet.predictor.l2.b.data=neuralNet.predictor.l2.b.data+numpy.array(delta['predictor/l2/b']).astype(numpy.float32)
+    neuralNet.predictor.l3.W.data=neuralNet.predictor.l3.W.data+numpy.array(delta['predictor/l3/W']).astype(numpy.float32)
+    neuralNet.predictor.l3.b.data=neuralNet.predictor.l3.b.data+numpy.array(delta['predictor/l3/b']).astype(numpy.float32)
+    chainer.serializers.save_npz(path+r"\neuralNetFile.npz",neuralNet)
+
     return True
 
 def updateEpochStats(compResult,sizeOfValidationMiniBatch = 1000):
