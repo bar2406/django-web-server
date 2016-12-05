@@ -58,8 +58,14 @@ def getSubsetData(DeviceID):
     return isTrain ,subsetDataForDevice, minibatchID, epochNumber
 
 def getPrivateNeuralNet():
+	##changable constans:
+	MIDDLE_LAYER_SIZE = 300
+	
+	####################################################################
+	
+	
     if not os.path.isfile(path+r'\neuralNetFile.npz'):
-        neuralNet=chainer.serializers.save_npz(path+r'\neuralNetFile.npz', L.Classifier(MLP(784, 300, 10)),True)
+        neuralNet=chainer.serializers.save_npz(path+r'\neuralNetFile.npz', L.Classifier(MLP(784, MIDDLE_LAYER_SIZE, 10)),True)
     return path+r"\neuralNetFile.npz"
 
 
@@ -104,10 +110,12 @@ def updateNeuralNet(delta):
     '''
     receives compResult which is a delta of the neuralNet and updates the neuralNet
     '''
-    neuralNet=L.Classifier(MLP(784, 300, 10))
+	##changable constans:
+	MIDDLE_LAYER_SIZE = 300
+	
+	####################################################################
+    neuralNet=L.Classifier(MLP(784, MIDDLE_LAYER_SIZE, 10))
     chainer.serializers.load_npz(path+r"\neuralNetFile.npz",neuralNet)
-    newNeuralNet=L.Classifier(MLP(784, 300, 10))
-    #TODO - again, probably the most arab thing in the world
     neuralNet.predictor.l1.W.data=neuralNet.predictor.l1.W.data+numpy.array(delta['predictor/l1/W']).astype(numpy.float32)
     neuralNet.predictor.l1.b.data=neuralNet.predictor.l1.b.data+numpy.array(delta['predictor/l1/b']).astype(numpy.float32)
     neuralNet.predictor.l2.W.data=neuralNet.predictor.l2.W.data+numpy.array(delta['predictor/l2/W']).astype(numpy.float32)
@@ -118,7 +126,7 @@ def updateNeuralNet(delta):
 
     return True
 
-def updateEpochStats(compResult,sizeOfValidationMiniBatch = 1000):
+def updateEpochStats(compResult):
     '''
     receives compResult which is hit rate and number of inputs it was calculated on and updates epoch stats in the database
     '''
@@ -170,11 +178,15 @@ def checkEpochDone():
     p.s even if epoch is done it dosen't mean that we dont allow new deltas from that epoch.
         it just means that all of the minibathces were allocated, certain percentage of them is done
     '''
+	##changable constans:
+	FINISHED_BATCHES_PRECENT = 0.95 # 95% is arbitrary, can be changed
+	
+	####################################################################
     if MiniBatch.objects.filter(status=0).filter(isTrain=1).count() !=0:
         return False    #not all batches are allocated to devices
-    if (MiniBatch.objects.filter(status=2).filter(isTrain=1).count()/MiniBatch.objects.filter(isTrain=1).count()) <0.95: # 95% is arbitrary, can be changed
-        return False    #less then 95% of batches are done
-    return True         #all batches are allocated and more then 95% of them are done
+    if (MiniBatch.objects.filter(status=2).filter(isTrain=1).count()/MiniBatch.objects.filter(isTrain=1).count()) < FINISHED_BATCHES_PRECENT:
+        return False    #less then FINISHED_BATCHES_PRECENT of batches are done
+    return True         #all batches are allocated and more then FINISHED_BATCHES_PRECENT of them are done
 
 def _fetchNextMiniBatch():
     '''

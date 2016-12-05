@@ -1,3 +1,3 @@
 doskey mng=python manage.py $*
-doskey cleanSQL=python manage.py flush & del MNISTDist\migrations\000* & del db.sqlite3 & python manage.py makemigrations & python manage.py migrate & python manage.py createsuperuser
+doskey cleanSQL=del files4runtime\neuralNetFile.npz & python manage.py flush & del MNISTDist\migrations\000* & del db.sqlite3 & python manage.py makemigrations & python manage.py migrate & python manage.py createsuperuser
 doskey run=python manage.py runserver $*
