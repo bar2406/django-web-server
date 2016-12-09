@@ -25,6 +25,7 @@ class MiniBatch(models.Model):
     imageIndices=models.TextField(null=True)
     epochID=models.IntegerField()
     isTrain=models.BooleanField(default=True)
+    isFromTestset=models.BooleanField(default=False)
     deviceID=models.IntegerField(null=True)    #unique device ID
     status=models.IntegerField(default=0)    #0-not asssigned 1-assigned and not completed 2-done
     startComputingTime=models.DateTimeField(null=True)
@@ -36,6 +37,7 @@ class MiniBatch(models.Model):
 @python_2_unicode_compatible  # only if you need to support Python 2
 class Epoch(models.Model):
     epochID=models.IntegerField(primary_key=True)   #epoch number
+    isTestEpoch=models.BooleanField(default=False)
     startingTime=models.DateTimeField()
     finishTime=models.DateTimeField(null=True)
     hitRate=models.FloatField(null=True)

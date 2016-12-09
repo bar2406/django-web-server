@@ -13,7 +13,9 @@ try:
 except:
     pass
 
-MNIST_DATASET_SIZE=60000    #for robustness, it is possiable to import the data base and checking its size 
+MNIST_DATASET_SIZE=60000    #for robustness, it is possiable to import the data base and checking its size
+MNIST_TESTSET_SIZE=10000
+TOTAL_NUMBER_OF_TRAINING_EPOCHS=2
 
 class MLP(chainer.Chain):
 
@@ -39,9 +41,17 @@ def getSubsetData(DeviceID):
     (isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData()
     '''
     if Epoch.objects.count() == 0 or checkEpochDone() == True:
-        _initEpoch()
-        _initMiniBatches()
+        isTestset=False
+        if (Epoch.objects.count() == TOTAL_NUMBER_OF_TRAINING_EPOCHS):
+            isTestset=True #finished training, start testing
+        
+        _initEpoch(isTestset)
+        _initMiniBatches(isTestset)
+
     currentBatch=_fetchNextMiniBatch()
+    if currentBatch is None:
+        #No more bathcs, finished running
+        return False,0,0,0,False,True #All the return parameters are not important, except the last one, which is finished running
 
     #updating currentBatch stats
     currentBatch.deviceID=DeviceID
@@ -55,7 +65,8 @@ def getSubsetData(DeviceID):
     subsetDataForDevice=jsonDec.decode(currentBatch.imageIndices)
     minibatchID=currentBatch.minibatchID
     epochNumber=currentBatch.epochID
-    return isTrain ,subsetDataForDevice, minibatchID, epochNumber
+    isFromTestset=currentBatch.isFromTestset
+    return isTrain, subsetDataForDevice, minibatchID, epochNumber, isFromTestset, False #last parameters means - didn't finish to run
 
 def getPrivateNeuralNet():
     ##changable constans:
@@ -138,6 +149,10 @@ def updateEpochStats(compResult):
     curr_epoch.save()
     return True
 
+def updateTestsetStats(computedResult):
+    Epoch.objects.filter(isTestEpoch=False)[0].finishTime=timezone.now()
+
+
 def calculateStats(deviceObj, minibatchID, epochNumber):
     '''
     calculates different statistics
@@ -147,30 +162,36 @@ def calculateStats(deviceObj, minibatchID, epochNumber):
     deviceObj.minibatchID = minibatchID
     deviceObj.epoch = epochNumber
 
-def _initEpoch():
+def _initEpoch(isTestset):
     '''
     creat and initialize the next epoch with standart stats
     '''
-    Epoch.objects.create(epochID = Epoch.objects.count()+1, startingTime = timezone.now(), finishTime = None, hitRate = 0) #TODO - finishTime,hitRate are unknown. better if they would be None
+    Epoch.objects.create(epochID = Epoch.objects.count()+1,isTestEpoch = isTestset, startingTime = timezone.now(), finishTime = None, hitRate = 0) #TODO - finishTime,hitRate are unknown. better if they would be None
 
-def _creatMiniBatch(imageIndices,epochID,isTrain):
+def _creatMiniBatch(imageIndices,epochID,isTrain,isTestset):
     '''
     create and initialize MiniBatch 
     '''
-    MiniBatch.objects.create(minibatchID = MiniBatch.objects.count()+1, imageIndices = json.dumps(imageIndices.tolist()), epochID = epochID, isTrain = isTrain, deviceID = None, status = 0, startComputingTime = None)
+    MiniBatch.objects.create(minibatchID = MiniBatch.objects.count()+1, imageIndices = json.dumps(imageIndices.tolist()), epochID = epochID, isTrain = isTrain,isFromTestset = isTestset, deviceID = None, status = 0, startComputingTime = None)
 
-def _initMiniBatches(batchsize = 1000,valSize = 5000): #valSize = validate set size
+def _initMiniBatches(isTestset,batchsize = 1000,valSize = 5000): #valSize = validate set size
     '''
     creates all minibatches for latest epoch.
     randomly orders mnist into minibatches, and devides them into training and validation batches.
     '''
-    order=numpy.random.permutation(MNIST_DATASET_SIZE)
-    for i in range(int(numpy.ceil((MNIST_DATASET_SIZE-valSize)/batchsize))): #create Training batches
-        _creatMiniBatch(order[:batchsize],Epoch.objects.count(),True)
-        order=order[batchsize:]
-    for i in range(int(numpy.ceil((valSize)/batchsize))): #create Validation batches
-        _creatMiniBatch(order[:batchsize],Epoch.objects.count(),False)
-        order=order[batchsize:]
+    if isTestset:
+        testIndices = numpy.arange(MNIST_TESTSET_SIZE)
+        for i in range(int(numpy.ceil(MNIST_TESTSET_SIZE/batchsize))):
+            _creatMiniBatch(testIndices[:batchsize],Epoch.objects.count(),False,isTestset)
+            testIndices=testIndices[batchsize:]
+    else:
+        order=numpy.random.permutation(MNIST_DATASET_SIZE)
+        for i in range(int(numpy.ceil((MNIST_DATASET_SIZE-valSize)/batchsize))): #create Training batches
+            _creatMiniBatch(order[:batchsize],Epoch.objects.count(),True,isTestset)
+            order=order[batchsize:]
+        for i in range(int(numpy.ceil((valSize)/batchsize))): #create Validation batches
+            _creatMiniBatch(order[:batchsize],Epoch.objects.count(),False,isTestset)
+            order=order[batchsize:]
 
 def checkEpochDone():
     '''
@@ -215,4 +236,12 @@ def _fetchNextMiniBatch():
     if MiniBatch.objects.filter(status=1).filter(isTrain=True).filter(epochID=Epoch.objects.count()).count() != 0:
         return MiniBatch.objects.filter(status=1).filter(isTrain=True).filter(epochID=Epoch.objects.count()).order_by('minibatchID')[0]
 
-    raise RuntimeError('error 1234: didn\'t found MiniBatch')
+    #5 priority: finish test set epoch (unassigned test minibatches)
+    if MiniBatch.objects.filter(status=0).filter(isTrain=False).filter(epochID=Epoch.objects.count()).count() != 0:
+        return MiniBatch.objects.filter(status=0).filter(isTrain=False).filter(epochID=Epoch.objects.count()).order_by('minibatchID')[0]
+
+    #6 priority: finish test set epoch (assigned and not done test minibatches)
+    if MiniBatch.objects.filter(status=1).filter(isTrain=False).filter(epochID=Epoch.objects.count()).count() != 0:
+        return MiniBatch.objects.filter(status=1).filter(isTrain=False).filter(epochID=Epoch.objects.count()).order_by('minibatchID')[0]
+
+    return None

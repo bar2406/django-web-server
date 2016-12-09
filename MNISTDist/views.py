@@ -56,10 +56,11 @@ def getData(request):
         except:
                 raise RuntimeError("devID in getData is not int, request.body is: " + str(request.body))
         else:
-            (isTrain ,subsetDataForDevice, minibatchID, epochNumber) = getSubsetData(devID)
+            (isTrain ,subsetDataForDevice, minibatchID, epochNumber, isTestset, isFinished) = getSubsetData(devID)
             calculateStats(Device.objects.get(deviceID = devID), minibatchID, epochNumber)
             tempFilePath=path+r"\files4runtime\Data.npz"
-            numpy.savez(tempFilePath, isTrain = isTrain, minibatchID = minibatchID, epochNumber = epochNumber, subsetDataForDevice = subsetDataForDevice)
+            numpy.savez(tempFilePath, isTrain = isTrain, minibatchID = minibatchID, epochNumber = epochNumber, 
+                        subsetDataForDevice = subsetDataForDevice, isTestset = isTestset, isFinished = isFinished)
             response=FileResponse(open(tempFilePath, 'rb'))
             response['Content-Disposition'] = 'attachment; filename=Data.npz'
             return response
@@ -87,4 +88,7 @@ def postData(request):
                 updateNeuralNet(computedResult)
             else :
                 updateEpochStats(computedResult)
+            if currentMiniBatch.isFromTestset:
+                if MiniBatch.Objects.filter(isFromTestset=False).exclude(status=2).count() == 0:
+                    updateTestsetStats(computedResult)
         return HttpResponse("None")
