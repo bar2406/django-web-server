@@ -15,7 +15,7 @@ except:
 
 MNIST_DATASET_SIZE=60000    #for robustness, it is possiable to import the data base and checking its size
 MNIST_TESTSET_SIZE=10000
-TOTAL_NUMBER_OF_TRAINING_EPOCHS=2
+TOTAL_NUMBER_OF_TRAINING_EPOCHS=1
 
 class MLP(chainer.Chain):
 
@@ -139,16 +139,19 @@ def updateNeuralNet(delta):
 
     return True
 
-def updateEpochStats(compResult):
+def updateEpochStats(compResult,epoch):
     '''
     receives compResult which is hit rate and number of inputs it was calculated on and updates epoch stats in the database
     '''
-    curr_epoch=Epoch.objects.order_by('-epochID')[1] #if current epoch is n, we validate the n-1 epoch
-    number_of_done_val_batches=MiniBatch.objects.filter(epochID=curr_epoch.epochID).filter(isTrain=False).filter(status=2).count()
-    curr_epoch.hitRate=numpy.average([curr_epoch.hitRate*(number_of_done_val_batches-1),compResult]) 
-    if MiniBatch.objects.filter(epochID=curr_epoch.epochID).filter(isTrain=False).exclude(status=2).count() == 0: #means all validation batches are done
+    
+    curr_epoch=Epoch.objects.get(epochID=epoch)
+    #print(" current hitrate: "+str(curr_epoch.hitRate))
+    number_of_done_val_batches=MiniBatch.objects.filter(epochID=curr_epoch.epochID).filter(isTrain=False).filter(isFromTestset=False).filter(status=2).count()
+    curr_epoch.hitRate=(curr_epoch.hitRate*(number_of_done_val_batches-1)+compResult)/number_of_done_val_batches
+    if MiniBatch.objects.filter(epochID=curr_epoch.epochID).filter(isTrain=False).filter(isFromTestset=False).exclude(status=2).count() == 0: #means all validation batches are done
         curr_epoch.finishTime=timezone.now()
     curr_epoch.save()
+    #print("epoch: "+str(curr_epoch.epochID)+" accuracy:"+str(compResult)+" number of done val batch: "+str(number_of_done_val_batches)+" current hitrate: "+str(curr_epoch.hitRate))
     return True
 
 def updateTestsetStats(computedResult):
@@ -219,13 +222,13 @@ def _fetchNextMiniBatch():
     '''
     #1 priority: unassigned validation batches from previous epoch
     if Epoch.objects.count() > 1:
-        if MiniBatch.objects.filter(status=0).exclude(isTrain=True).filter(epochID=Epoch.objects.count()-1).count() !=0 :
-            return MiniBatch.objects.filter(status=0).exclude(isTrain=True).filter(epochID=Epoch.objects.count()-1).order_by('minibatchID')[0]
+        if MiniBatch.objects.filter(status=0).exclude(isTrain=True).exclude(isFromTestset=True).exclude(epochID=Epoch.objects.count()).count() !=0 :
+            return MiniBatch.objects.filter(status=0).exclude(isTrain=True).exclude(isFromTestset=True).exclude(epochID=Epoch.objects.count()).order_by('minibatchID')[0]
 
     #2 priority: assigned (and not done) validation batches from previous epoch that are over X time old
     if Epoch.objects.count() > 1:
-        if MiniBatch.objects.filter(status=1).exclude(isTrain=True).filter(epochID=Epoch.objects.count()-1).order_by('startComputingTime').count() !=0 :
-            tempBatch=MiniBatch.objects.filter(status=1).exclude(isTrain=True).filter(epochID=Epoch.objects.count()-1).order_by('startComputingTime')[0]
+        if MiniBatch.objects.filter(status=1).exclude(isTrain=True).exclude(isFromTestset=True).exclude(epochID=Epoch.objects.count()).order_by('startComputingTime').count() !=0 :
+            tempBatch=MiniBatch.objects.filter(status=1).exclude(isTrain=True).exclude(isFromTestset=True).exclude(epochID=Epoch.objects.count()).order_by('startComputingTime')[0]
             delta=timezone.now()-tempBatch.startComputingTime
             if(delta.seconds>60*15): #means X=15 minutes
                 return tempBatch

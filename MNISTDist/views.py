@@ -89,7 +89,7 @@ def postData(request):
             if currentMiniBatch.isTrain:
                 updateNeuralNet(computedResult)
             else :
-                updateEpochStats(computedResult)
+                updateEpochStats(computedResult,currentMiniBatch.epochID)
             if currentMiniBatch.isFromTestset:
                 if MiniBatch.Objects.filter(isFromTestset=False).exclude(status=2).count() == 0:
                     updateTestsetStats(computedResult)
