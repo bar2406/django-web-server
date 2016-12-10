@@ -103,9 +103,9 @@ def dumpDataBase(request):
             myfile.write(str(device.deviceID)+" "+str(device.deviceModel)+" "+str(device.totalDataSetsGiven)+" "+str(device.totalDataSetsRelevant)+"\n")
     #dump minibatches
     with open(path+r"\files4runtime" + "\MiniBatch.txt", "w") as myfile:
-        myfile.write("minibatchID\tepochID\t isTrain isFromTestset deviceID status deviceComputingTime accuracy \n")
+        myfile.write("minibatchID\tepochID\tisTrain\tisFromTestset\tdeviceID\tstatus\tdeviceComputingTime\taccuracy \n")
         for minibatch in MiniBatch.objects.all():
-            myfile.write(str(minibatch.minibatchID)+"\t"+str(minibatch.epochID)+"\t"+str(minibatch.isTrain).lower()+" "+str(minibatch.isFromTestset).lower()+" "+str(minibatch.deviceID if minibatch.deviceID else -1)+" "+str(minibatch.status)+" "+str(minibatch.deviceComputingTime if minibatch.deviceComputingTime else -1)+" "+str(minibatch.accuracy if minibatch.accuracy else -1)+"\n")
+            myfile.write(str(minibatch.minibatchID)+"\t\t\t"+str(minibatch.epochID)+"\t\t"+str(minibatch.isTrain).lower()+"\t"+str(minibatch.isFromTestset).lower()+"\t\t\t"+str(minibatch.deviceID if minibatch.deviceID else -1)+"\t\t\t"+str(minibatch.status)+"\t\t"+str(minibatch.deviceComputingTime if minibatch.deviceComputingTime else -1)+"\t\t\t"+str(minibatch.accuracy if minibatch.accuracy else -1)+"\n")
     #dump epochs
     with open(path+r"\files4runtime" + "\Epoch.txt", "w") as myfile:
         myfile.write("epochID isTestEpoch hitRate \n")
