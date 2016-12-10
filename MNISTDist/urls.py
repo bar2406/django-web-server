@@ -9,5 +9,6 @@ urlpatterns = [
 	url(r'^getTestSet', views.getTestSet, name='getTestSet'),
     url(r'^getData', views.getData, name='getData'),
     url(r'^postData', views.postData, name='postData'),
+    url(r'^dumpDataBase', views.dumpDataBase, name='dumpDataBase'),
 
 ]

@@ -28,8 +28,10 @@ class MiniBatch(models.Model):
     isFromTestset=models.BooleanField(default=False)
     deviceID=models.IntegerField(null=True)    #unique device ID
     status=models.IntegerField(default=0)    #0-not asssigned 1-assigned and not completed 2-done
-    startComputingTime=models.DateTimeField(null=True)
-    finishComputingTime=models.DateTimeField(null=True)
+    startComputingTime=models.DateTimeField(null=True)  #time of assigment from server
+    finishComputingTime=models.DateTimeField(null=True) #time batch is recived by server
+    deviceComputingTime=models.FloatField(null=True)    #computing time as measured by device
+    accuracy=models.FloatField(null=True)
 
     def __str__(self):
         return "minibatchID: " + str(self.minibatchID)

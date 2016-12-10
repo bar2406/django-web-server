@@ -71,7 +71,7 @@ def postData(request):
     Server will not send anything back
     '''
     if request.method == 'POST': #POST because device is sending the parameters mentioned above
-        (devID,miniBatchID, epochNumber, computingTime, computedResult) = parsePostDataParameters(request.body)
+        (devID,miniBatchID, epochNumber, computingTime, computedResult,accuracy) = parsePostDataParameters(request.body)
         currentDevice = Device.objects.get(deviceID = devID)
         currentMiniBatch = MiniBatch.objects.get(minibatchID=miniBatchID)
         if dataIsRelevant(currentDevice,currentMiniBatch): #check if data from device is relevant (server didn't drop its result for irrelevence-if too much time has passed)
@@ -82,6 +82,8 @@ def postData(request):
             currentDevice.totalDataSetsRelevant=currentDevice.totalDataSetsRelevant+1
             currentDevice.save()
             currentMiniBatch.status=2
+            currentMiniBatch.accuracy=accuracy
+            currentMiniBatch.deviceComputingTime=computingTime
             currentMiniBatch.finishComputingTime=timezone.now()
             currentMiniBatch.save()
             if currentMiniBatch.isTrain:
@@ -92,3 +94,21 @@ def postData(request):
                 if MiniBatch.Objects.filter(isFromTestset=False).exclude(status=2).count() == 0:
                     updateTestsetStats(computedResult)
         return HttpResponse("None")
+
+def dumpDataBase(request):
+    #dump devices
+    with open(path+r"\files4runtime" + "\Device.txt", "w") as myfile:
+        myfile.write("deviceID deviceModel totalDataSetsGiven totalDataSetsRelevant\n")
+        for device in Device.objects.all():
+            myfile.write(str(device.deviceID)+" "+str(device.deviceModel)+" "+str(device.totalDataSetsGiven)+" "+str(device.totalDataSetsRelevant)+"\n")
+    #dump minibatches
+    with open(path+r"\files4runtime" + "\MiniBatch.txt", "w") as myfile:
+        myfile.write("minibatchID\tepochID\t isTrain isFromTestset deviceID status deviceComputingTime accuracy \n")
+        for minibatch in MiniBatch.objects.all():
+            myfile.write(str(minibatch.minibatchID)+"\t"+str(minibatch.epochID)+"\t"+str(minibatch.isTrain).lower()+" "+str(minibatch.isFromTestset).lower()+" "+str(minibatch.deviceID if minibatch.deviceID else -1)+" "+str(minibatch.status)+" "+str(minibatch.deviceComputingTime if minibatch.deviceComputingTime else -1)+" "+str(minibatch.accuracy if minibatch.accuracy else -1)+"\n")
+    #dump epochs
+    with open(path+r"\files4runtime" + "\Epoch.txt", "w") as myfile:
+        myfile.write("epochID isTestEpoch hitRate \n")
+        for epoch in Epoch.objects.all():
+            myfile.write(str(epoch.epochID)+" "+str(epoch.isTestEpoch)+" "+str(epoch.hitRate)+"\n") 
+    return HttpResponse("dump completed. find your files at cwd()\files4runtime")

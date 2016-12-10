@@ -92,10 +92,12 @@ def parsePostDataParameters(rquestBody):
     miniBatchID = data['miniBatchID']
     epochNumber = data['epochNumber']
     computingTime = data['computingTime']
-    computingTime=0 #TODO - maybe actually get it from device
+    computingTime=data['computingTime']
     computedResult = data['computedResult']
+    accuracy = data['accuracy']
 
-    return  (deviceID,miniBatchID, epochNumber, computingTime, computedResult)
+
+    return  (deviceID,miniBatchID, epochNumber, computingTime, computedResult,accuracy)
 
 def dataIsRelevant(Device,Batch):
     '''
