@@ -98,9 +98,9 @@ def postData(request):
 def dumpDataBase(request):
     #dump devices
     with open(path+r"\files4runtime" + "\Device.txt", "w") as myfile:
-        myfile.write("deviceID deviceModel totalDataSetsGiven totalDataSetsRelevant\n")
+        myfile.write("deviceID\tdeviceModel\t\t\t\t\ttotalDataSetsGiven\ttotalDataSetsRelevant\n")
         for device in Device.objects.all():
-            myfile.write(str(device.deviceID)+" "+str(device.deviceModel)+" "+str(device.totalDataSetsGiven)+" "+str(device.totalDataSetsRelevant)+"\n")
+            myfile.write(str(device.deviceID)+"\t\t\t"+str(device.deviceModel)+"\t\t\t\t"+str(device.totalDataSetsGiven)+"\t"+str(device.totalDataSetsRelevant)+"\n")
     #dump minibatches
     with open(path+r"\files4runtime" + "\MiniBatch.txt", "w") as myfile:
         myfile.write("1: minibatchID\t2: epochID\t3: isTrain\t4: isFromTestset\t5: deviceID\t6: status\t7: deviceComputingTime\t8: accuracy\t\t\t9: serverComputingTime \n")

@@ -70,7 +70,7 @@ def getSubsetData(DeviceID):
 
 def getPrivateNeuralNet():
     ##changable constans:
-    MIDDLE_LAYER_SIZE = 300
+    MIDDLE_LAYER_SIZE = 100
     
     ####################################################################
 	
@@ -124,7 +124,7 @@ def updateNeuralNet(delta):
     receives compResult which is a delta of the neuralNet and updates the neuralNet
     '''
     ##changable constans:
-    MIDDLE_LAYER_SIZE = 300
+    MIDDLE_LAYER_SIZE = 100
     
     ####################################################################
     neuralNet=L.Classifier(MLP(784, MIDDLE_LAYER_SIZE, 10))
