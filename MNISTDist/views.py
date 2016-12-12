@@ -103,17 +103,17 @@ def dumpDataBase(request):
             myfile.write(str(device.deviceID)+" "+str(device.deviceModel)+" "+str(device.totalDataSetsGiven)+" "+str(device.totalDataSetsRelevant)+"\n")
     #dump minibatches
     with open(path+r"\files4runtime" + "\MiniBatch.txt", "w") as myfile:
-        myfile.write("minibatchID\tepochID\tisTrain\tisFromTestset\tdeviceID\tstatus\tdeviceComputingTime\taccuracy\t\tserverComputingTime \n")
+        myfile.write("1: minibatchID\t2: epochID\t3: isTrain\t4: isFromTestset\t5: deviceID\t6: status\t7: deviceComputingTime\t8: accuracy\t\t\t9: serverComputingTime \n")
         for minibatch in MiniBatch.objects.all():
             if minibatch.finishComputingTime :
                 serverTrainingTime=minibatch.finishComputingTime-minibatch.startComputingTime
                 serverTrainingTime=serverTrainingTime.total_seconds()
             else :
                 serverTrainingTime=-1
-            myfile.write(str(minibatch.minibatchID)+"\t\t\t"+str(minibatch.epochID)+"\t\t"+str(minibatch.isTrain).lower()+"\t"+str(minibatch.isFromTestset).lower()+"\t\t\t"+str(minibatch.deviceID if minibatch.deviceID else -1)+"\t\t\t"+str(minibatch.status)+"\t\t"+str(minibatch.deviceComputingTime if minibatch.deviceComputingTime else -1)+"\t\t\t"+str(minibatch.accuracy if minibatch.accuracy else -1)+"\t\t"+str(serverTrainingTime)+"\n")
+            myfile.write(str(minibatch.minibatchID)+"\t\t\t\t"+str(minibatch.epochID)+"\t\t\t"+str(minibatch.isTrain).lower()+"\t\t"+str(minibatch.isFromTestset).lower()+"\t\t\t\t"+str(minibatch.deviceID if minibatch.deviceID else -1)+"\t\t\t"+str(minibatch.status)+"\t\t\t"+str(minibatch.deviceComputingTime if minibatch.deviceComputingTime else -1)+"\t\t\t\t"+str(minibatch.accuracy if minibatch.accuracy else -1)+"\t\t"+str(serverTrainingTime)+"\n")
     #dump epochs
     with open(path+r"\files4runtime" + "\Epoch.txt", "w") as myfile:
         myfile.write("epochID isTestEpoch hitRate \n")
         for epoch in Epoch.objects.all():
             myfile.write(str(epoch.epochID)+" "+str(epoch.isTestEpoch)+" "+str(epoch.hitRate)+"\n") 
-    return HttpResponse("dump completed. find your files at cwd()\files4runtime")
+    return HttpResponse("dump completed. find your files at: "+path+r"\files4runtime")
