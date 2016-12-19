@@ -15,7 +15,7 @@ except:
 
 MNIST_DATASET_SIZE=60000    #for robustness, it is possiable to import the data base and checking its size
 MNIST_TESTSET_SIZE=10000
-TOTAL_NUMBER_OF_TRAINING_EPOCHS=1
+TOTAL_NUMBER_OF_TRAINING_EPOCHS=10
 
 class MLP(chainer.Chain):
 
@@ -44,9 +44,9 @@ def getSubsetData(DeviceID):
         isTestset=False
         if (Epoch.objects.count() == TOTAL_NUMBER_OF_TRAINING_EPOCHS):
             isTestset=True #finished training, start testing
-        
-        _initEpoch(isTestset)
-        _initMiniBatches(isTestset)
+        if (Epoch.objects.count() <= TOTAL_NUMBER_OF_TRAINING_EPOCHS):
+            _initEpoch(isTestset)
+            _initMiniBatches(isTestset)
 
     currentBatch=_fetchNextMiniBatch()
     if currentBatch is None:

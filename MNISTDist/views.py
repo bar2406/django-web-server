@@ -72,6 +72,7 @@ def postData(request):
     '''
     if request.method == 'POST': #POST because device is sending the parameters mentioned above
         (devID,miniBatchID, epochNumber, computingTime, computedResult,accuracy) = parsePostDataParameters(request.body)
+        print("minibacthID is: "+str(miniBatchID))
         currentDevice = Device.objects.get(deviceID = devID)
         currentMiniBatch = MiniBatch.objects.get(minibatchID=miniBatchID)
         if dataIsRelevant(currentDevice,currentMiniBatch): #check if data from device is relevant (server didn't drop its result for irrelevence-if too much time has passed)
